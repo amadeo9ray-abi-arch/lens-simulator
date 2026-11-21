@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Candle · Lens · Image</title>
+<style>
+  :root{--bg:#0f1115;--panel:#171a22;--ink:#e8e6e3;--mute:#9aa0ab;--acc:#ffb347}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+  .wrap{max-width:1050px;margin:0 auto;padding:12px}
+  h1{font-size:18px;margin:4px 0 2px}
+  .sub{color:var(--mute);font-size:12px;margin-bottom:10px}
+  #stage{position:relative}
+  #c{width:100%;height:340px;display:block;background:var(--panel);border-radius:12px;touch-action:none;cursor:default}
+  .inset{position:absolute;right:8px;top:8px;background:#000;border:1px solid #3a3f4c;border-radius:8px;padding:4px;text-align:center}
+  @media (max-width:600px){#wv{width:80px!important;height:80px!important}.inset{top:auto;bottom:8px}}
+  .inset span{display:block;font-size:10px;color:var(--mute);margin-bottom:2px}
+  #wv{width:110px;height:110px;display:block;background:#08090c;border-radius:4px}
+  .controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px 20px;margin-top:12px;background:var(--panel);padding:12px;border-radius:12px}
+  .ctl label{display:flex;justify-content:space-between;font-size:13px;margin-bottom:2px}
+  .ctl b{color:var(--acc);font-weight:600}
+  input[type=range]{width:100%;accent-color:var(--acc)}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  select,button{background:#232837;color:var(--ink);border:1px solid #3a3f4c;border-radius:8px;padding:7px 10px;font-size:13px}
+  button:active{transform:scale(.97)}
+  .readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:12px}
+  .readout div{background:var(--panel);padding:8px 10px;border-radius:8px;font-size:13px}
+  .readout small{display:block;color:var(--mute);font-size:11px}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--mute);margin-top:8px}
+  .legend i{display:inline-block;width:14px;height:3px;vertical-align:middle;margin-right:5px;border-radius:2px}
+  .ok{color:#7be38a}.warn{color:#ffb86b}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Candle · Lens · Image</h1>
+  <div class="sub">Drag the candle or the wall on the diagram, or use the sliders. Heights are exaggerated vertically for clarity.</div>
+
+  <div id="stage">
+    <canvas id="c"></canvas>
+    <div class="inset"><span>Seen on the wall</span><canvas id="wv"></canvas></div>
+  </div>
+
+  <div class="legend">
+    <span><i style="background:#ffd54a"></i>Parallel ray</span>
+    <span><i style="background:#4fd1ff"></i>Centre ray</span>
+    <span><i style="background:#ff6ad5"></i>Focal ray</span>
+    <span><i style="background:rgba(255,170,80,.6)"></i>Ray fan through lens</span>
+    <span><i style="background:#fff;opacity:.5"></i>Dashed = virtual</span>
+  </div>
+
+  <div class="controls">
+    <div class="ctl"><label><span>Candle distance (d<sub>o</sub>)</span> <b id="v_do"></b></label><input id="do" type="range" min="5" max="150" step="0.5" value="60"></div>
+    <div class="ctl"><label><span>Wall distance</span> <b id="v_dw"></b></label><input id="dw" type="range" min="5" max="200" step="0.5" value="70"></div>
+    <div class="ctl"><label><span>Lens curvature radius R</span> <b id="v_R"></b></label><input id="R" type="range" min="10" max="100" step="0.5" value="30"></div>
+    <div class="ctl"><label><span>Refractive index n</span> <b id="v_n"></b></label><input id="n" type="range" min="1.3" max="1.9" step="0.01" value="1.5"></div>
+    <div class="ctl"><label><span>Lens aperture (half-height)</span> <b id="v_ap"></b></label><input id="ap" type="range" min="1.5" max="9" step="0.1" value="6"></div>
+    <div class="ctl"><label><span>Candle height</span> <b id="v_hc"></b></label><input id="hc" type="range" min="2" max="12" step="0.1" value="7"></div>
+    <div class="ctl"><label><span>Number of rays in fan</span> <b id="v_nr"></b></label><input id="nr" type="range" min="0" max="25" step="1" value="11"></div>
+    <div class="ctl row">
+      <select id="type"><option value="convex">Convex (converging)</option><option value="concave">Concave (diverging)</option></select>
+      <button id="focus">Move wall to focus</button>
+    </div>
+  </div>
+
+  <div class="readout">
+    <div><small>Focal length f = R / 2(n−1)</small><span id="r_f"></span></div>
+    <div><small>Image distance d<sub>i</sub></small><span id="r_di"></span></div>
+    <div><small>Magnification m = −d<sub>i</sub>/d<sub>o</sub></small><span id="r_m"></span></div>
+    <div><small>Image type</small><span id="r_type"></span></div>
+    <div><small>On the wall</small><span id="r_wall"></span></div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const S = {};
+const keys = ['do','dw','R','n','ap','hc','nr'];
+const units = {do:' cm',dw:' cm',R:' cm',n:'',ap:' cm',hc:' cm',nr:''};
+function readUI(){
+  keys.forEach(k => { S[k] = parseFloat($(k).value); $('v_'+k).textContent = S[k] + units[k]; });
+  S.type = $('type').value;
+}
+keys.forEach(k => $(k).addEventListener('input', readUI));
+$('type').addEventListener('change', readUI);
+readUI();
+
+function optics(){
+  let f = S.R / (2*(S.n-1));
+  if (S.type === 'concave') f = -f;
+  const d = S.do;
+  const di = Math.abs(d - f) < 1e-6 ? Infinity : 1/(1/f - 1/d);
+  const m = isFinite(di) ? -di/d : Infinity;
+  return {f, di, m};
+}
+
+$('focus').onclick = () => {
+  const {di} = optics();
+  if (isFinite(di) && di > 5 && di <= 200){ $('dw').value = di.toFixed(1); readUI(); }
+  else { $('r_wall').innerHTML = '<span class="warn">No real image in range to focus on</span>'; flashMsg = performance.now(); }
+};
+let flashMsg = -1e9;
+
+// ---------- canvas setup ----------
+const cv = $('c'), ctx = cv.getContext('2d');
+const wv = $('wv'), wctx = wv.getContext('2d');
+let W, H, dpr;
+const X0 = -158, X1 = 208, YMAX = 15;
+function resize(){
+  dpr = window.devicePixelRatio || 1;
+  W = cv.clientWidth; H = cv.clientHeight;
+  cv.width = W*dpr; cv.height = H*dpr;
+  wv.width = wv.clientWidth*dpr; wv.height = wv.clientHeight*dpr;
+}
+window.addEventListener('resize', resize); resize();
+
+const sx = () => W/(X1-X0);
+const sy = () => H/(2*YMAX);
+const tx = x => (x - X0)*sx();
+const ty = y => H/2 - y*sy();
+
+function line(x1,y1,x2,y2,color,w=1.5,dash=null,alpha=1){
+  ctx.save(); ctx.globalAlpha=alpha; ctx.strokeStyle=color; ctx.lineWidth=w;
+  if(dash) ctx.setLineDash(dash);
+  ctx.beginPath(); ctx.moveTo(tx(x1),ty(y1)); ctx.lineTo(tx(x2),ty(y2)); ctx.stroke(); ctx.restore();
+}
+
+// Candle drawn in pixel space: base at (px,py), height in px, flip if negative
+function drawCandle(c, px, py, hpx, t, opts={}){
+  const {ghost=false, dashed=false, pxPerCm=sy()} = opts;
+  const sgn = Math.sign(hpx) || 1, h = Math.abs(hpx);
+  const bodyH = h*0.72, w = Math.max(4, Math.min(1.6*pxPerCm, h*0.28));
+  c.save();
+  c.translate(px, py); c.scale(1, sgn);
+  c.globalAlpha = ghost ? 0.45 : 1;
+  // body
+  c.fillStyle = dashed ? 'transparent' : '#f1e9d8';
+  c.strokeStyle = dashed ? '#ffffffaa' : '#cfc4ad';
+  c.lineWidth = 1.2;
+  if (dashed) c.setLineDash([4,3]);
+  c.beginPath(); c.rect(-w/2, -bodyH, w, bodyH); c.fill(); c.stroke();
+  // wick
+  c.setLineDash([]);
+  c.strokeStyle = dashed ? '#ffffff88' : '#333'; c.beginPath(); c.moveTo(0,-bodyH); c.lineTo(0,-bodyH-h*0.04); c.stroke();
+  // flame
+  const fl = h - bodyH, fw = w*0.55*(1+0.06*Math.sin(t*0.011)), sway = Math.sin(t*0.007)*fw*0.12;
+  const fy0 = -bodyH - h*0.02;
+  c.beginPath();
+  c.moveTo(0, fy0);
+  c.bezierCurveTo(fw, fy0 - fl*0.25, fw*0.5, fy0 - fl*0.75, sway, -h);
+  c.bezierCurveTo(-fw*0.5, fy0 - fl*0.75, -fw, fy0 - fl*0.25, 0, fy0);
+  if (dashed){ c.setLineDash([4,3]); c.strokeStyle='#ffd27faa'; c.stroke(); }
+  else {
+    const g = c.createLinearGradient(0, fy0, 0, -h);
+    g.addColorStop(0,'#ff7b00'); g.addColorStop(0.5,'#ffc93c'); g.addColorStop(1,'#fff6c8');
+    c.fillStyle = g; c.shadowColor = '#ffae42'; c.shadowBlur = 14; c.fill();
+  }
+  c.restore();
+}
+
+// ---------- main draw ----------
+function draw(t){
+  const {f, di, m} = optics();
+  const {do:d, dw, ap, hc, nr} = S;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,W,H);
+
+  // grid ticks
+  ctx.fillStyle = '#5d6473'; ctx.font = '10px system-ui'; ctx.textAlign='center';
+  for (let x = -150; x <= 200; x += 25){
+    ctx.fillRect(tx(x), H/2-3, 1, 6);
+    if (x % 50 === 0 && x !== 0) ctx.fillText(x, tx(x), H/2+16);
+  }
+  // optical axis
+  line(X0,0,X1,0,'#3b4150',1);
+
+  // focal points
+  [[f,'F′'],[-f,'F'],[2*f,'2F′'],[-2*f,'2F']].forEach(([x,lab],i)=>{
+    if (x < X0 || x > X1) return;
+    ctx.fillStyle = i<2 ? '#ff6ad5' : '#8a6a99';
+    ctx.beginPath(); ctx.arc(tx(x), ty(0), i<2?4:3, 0, Math.PI*2); ctx.fill();
+    ctx.fillText(lab, tx(x), ty(0)-8);
+  });
+
+  // wall
+  const wx = tx(dw);
+  ctx.fillStyle = '#3a4152'; ctx.fillRect(wx, 0, 7, H);
+  ctx.fillStyle = '#9aa0ab'; ctx.fillText('wall', wx+3, 12);
+
+  // ---------- rays ----------
+  ctx.save(); ctx.beginPath(); ctx.rect(0,0,wx,H); ctx.clip();
+  const trace = (y0, yl) => {   // from (-d, y0) to lens at height yl → returns outgoing slope
+    const sIn = (yl - y0)/d;
+    return sIn - yl/f;
+  };
+  // fan
+  const hits = [];
+  const N = nr;
+  for (let i = 0; i < N; i++){
+    const yl = N === 1 ? 0 : -ap*0.97 + (2*ap*0.97)*i/(N-1);
+    const so = trace(hc, yl);
+    const yw = yl + so*dw;
+    hits.push(yw);
+    line(-d, hc, 0, yl, 'rgba(255,170,80,0.55)', 1);
+    line(0, yl, dw, yw, 'rgba(255,170,80,0.55)', 1);
+  }
+  // principal rays
+  const principal = [];
+  principal.push({yl: hc, c:'#ffd54a'});            // parallel in
+  principal.push({yl: 0,  c:'#4fd1ff'});            // through centre
+  if (Math.abs(d - f) > 0.5) principal.push({yl: -hc*f/(d-f), c:'#ff6ad5'}); // via focal point → parallel out
+  principal.forEach(p=>{
+    const so = trace(hc, p.yl);
+    const outside = Math.abs(p.yl) > ap;
+    const dash = outside ? [5,4] : null;
+    line(-d, hc, 0, p.yl, p.c, 2, dash, outside?0.6:1);
+    line(0, p.yl, dw, p.yl + so*dw, p.c, 2, dash, outside?0.6:1);
+    // virtual extension backwards
+    if (isFinite(di) && di < 0) line(0, p.yl, di, p.yl + so*di, p.c, 1.2, [3,4], 0.6);
+    // beyond-lens extension to virtual intersection when di>dw is irrelevant (clipped by wall)
+  });
+  ctx.restore();
+
+  // lit area on wall
+  const tipHits = hits.length ? hits : [ (0 + trace(hc,0)*dw) ];
+  const baseHits = [-ap, ap].map(yl => yl + (yl/d - yl/f)*dw);
+  const allH = tipHits.concat(baseHits);
+  const lo = Math.min(...allH), hi = Math.max(...allH);
+  ctx.fillStyle = 'rgba(255,190,90,0.55)';
+  ctx.fillRect(wx-2, ty(hi), 4, Math.max(2, ty(lo)-ty(hi)));
+
+  // ---------- lens (true shape using vertical scale) ----------
+  const R = S.R, h = Math.min(ap, R*0.98), e = 0.25;
+  const sagAt = y => R - Math.sqrt(R*R - y*y);
+  const sag = sagAt(h), k = sy(), cx = tx(0);
+  ctx.beginPath();
+  const steps = 40;
+  for (let i=0;i<=steps;i++){ // left surface top→bottom
+    const y = h - 2*h*i/steps;
+    const xw = S.type==='convex' ? -e - (sag - sagAt(y)) : -e - sagAt(y);
+    i ? ctx.lineTo(cx + xw*k, ty(y)) : ctx.moveTo(cx + xw*k, ty(y));
+  }
+  for (let i=0;i<=steps;i++){ // right surface bottom→top
+    const y = -h + 2*h*i/steps;
+    const xw = S.type==='convex' ? e + (sag - sagAt(y)) : e + sagAt(y);
+    ctx.lineTo(cx + xw*k, ty(y));
+  }
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(120,200,255,0.22)'; ctx.fill();
+  ctx.strokeStyle = '#8fd3ff'; ctx.lineWidth = 1.5; ctx.stroke();
+
+  // ---------- candle (object) ----------
+  drawCandle(ctx, tx(-d), ty(0), hc*sy(), t);
+  ctx.fillStyle='#9aa0ab'; ctx.fillText('candle', tx(-d), ty(0)+28);
+
+  // ---------- image ----------
+  if (isFinite(di) && di > X0 && di < X1 && Math.abs(m*hc) < YMAX*1.5){
+    const real = di > 0;
+    drawCandle(ctx, tx(di), ty(0), m*hc*sy(), t, {ghost: real, dashed: !real});
+    ctx.fillStyle = real ? '#ffcf8a' : '#cfd3da';
+    ctx.fillText(real ? 'real image' : 'virtual image', tx(di), m*hc>0 ? ty(0)+28 : ty(0)-8 - Math.abs(m*hc)*sy() - 4);
+  } else {
+    ctx.fillStyle='#cfd3da'; ctx.textAlign='left';
+    ctx.fillText(isFinite(di) ? `image at ${di.toFixed(0)} cm (off-screen)` : 'image at infinity (rays parallel)', 8, H-10);
+    ctx.textAlign='center';
+  }
+
+  // ---------- wall view inset ----------
+  drawWallView(t, tipHits);
+
+  // ---------- readouts ----------
+  $('r_f').textContent = f.toFixed(1) + ' cm';
+  $('r_di').textContent = !isFinite(di) ? '∞' : di.toFixed(1) + ' cm' + (di<0 ? ' (same side as candle)' : '');
+  $('r_m').textContent = !isFinite(m) ? '∞' : m.toFixed(2) + '×';
+  $('r_type').textContent = !isFinite(di) ? '—' :
+    `${di>0?'Real':'Virtual'}, ${m<0?'inverted':'upright'}, ${Math.abs(Math.abs(m)-1)<0.02?'same size':Math.abs(m)>1?'enlarged':'reduced'}`;
+  if (performance.now() - flashMsg > 1800){
+    const blur = Math.max(...tipHits) - Math.min(...tipHits);
+    const sharp = isFinite(di) && di>0 && Math.abs(dw-di) < Math.max(0.6, di*0.015);
+    $('r_wall').innerHTML = sharp ? '<span class="ok">Sharp image ✓</span>'
+      : `<span class="warn">Blurry — spot ≈ ${blur.toFixed(1)} cm</span>`;
+  }
+}
+
+function drawWallView(t, tipHits){
+  const c = wctx, Wv = wv.clientWidth, Hv = wv.clientHeight;
+  c.setTransform(dpr,0,0,dpr,0,0);
+  c.clearRect(0,0,Wv,Hv);
+  c.fillStyle = '#14161b'; c.fillRect(0,0,Wv,Hv);
+  const pxcm = Hv/(2*YMAX);
+  const yt = tipHits.reduce((a,b)=>a+b,0)/tipHits.length;      // average landing height of flame tip
+  const blur = Math.max(...tipHits) - Math.min(...tipHits);     // spot diameter in cm
+  const blurPx = Math.min(18, blur*pxcm*0.5);
+  wv.style.filter = `blur(${blurPx.toFixed(1)}px)`;
+  const bright = Math.max(0.18, Math.min(1, 1/(1 + blur*0.25)));
+  c.globalAlpha = bright;
+  if (Math.abs(yt) > 0.05) drawCandle(c, Wv/2, Hv/2, yt*pxcm, t, {pxPerCm: pxcm});
+  c.globalAlpha = 1;
+}
+
+// ---------- dragging ----------
+let drag = null;
+function worldX(ev){ const r = cv.getBoundingClientRect(); return (ev.clientX - r.left)/sx() + X0; }
+cv.addEventListener('pointerdown', ev=>{
+  const x = worldX(ev), tol = 14/sx();
+  if (Math.abs(x + S.do) < Math.max(tol, 4)) drag = 'do';
+  else if (Math.abs(x - S.dw) < Math.max(tol, 4)) drag = 'dw';
+  if (drag) cv.setPointerCapture(ev.pointerId);
+});
+cv.addEventListener('pointermove', ev=>{
+  const x = worldX(ev);
+  if (!drag){
+    const tol = Math.max(14/sx(), 4);
+    cv.style.cursor = (Math.abs(x+S.do)<tol || Math.abs(x-S.dw)<tol) ? 'ew-resize' : 'default';
+    return;
+  }
+  if (drag==='do') $('do').value = Math.min(150, Math.max(5, -x)).toFixed(1);
+  else $('dw').value = Math.min(200, Math.max(5, x)).toFixed(1);
+  readUI();
+});
+['pointerup','pointercancel'].forEach(e=>cv.addEventListener(e, ()=> drag=null));
+
+(function loop(t){ draw(t||0); requestAnimationFrame(loop); })();
+</script>
+</body>
+</html>
