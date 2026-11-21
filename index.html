@@ -24,8 +24,8 @@
   .tabs button.on{background:var(--acc);color:#1a1a1a;border-color:var(--acc);font-weight:600}
   .tabs .fa{text-align:center;display:inline}
   #stage{position:relative}
-  @media (max-width:700px){#stage{position:sticky;top:0;z-index:5;background:var(--bg);padding-top:4px}#c{height:270px}}
-  #c{width:100%;height:340px;display:block;background:var(--stage);border-radius:12px;touch-action:none}
+  @media (max-width:700px){#stage{position:sticky;top:0;z-index:5;background:var(--bg);padding-top:4px}#c{height:270px}#resetView{top:12px}}
+  #c{width:100%;height:340px;display:block;background:var(--stage);border-radius:12px;touch-action:none;user-select:none;-webkit-user-select:none}
   .inset{position:absolute;right:8px;top:8px;background:#000;border:1px solid var(--line);border-radius:8px;padding:4px;text-align:center}
   .inset span{display:block;font-size:10px;color:var(--mute);margin-bottom:2px}
   #wv{width:110px;height:110px;display:block;background:#08090c;border-radius:4px}
@@ -42,7 +42,16 @@
   .group{background:var(--panel);border-radius:12px;padding:10px 12px;border:1px solid var(--line)}
   .group h4{margin:0 0 8px;font-size:13px;color:var(--acc);padding-bottom:6px;border-bottom:1px solid var(--line)}
   .ctl{margin:8px 0}
-  .lab{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;font-size:12.5px;align-items:center}
+  .lab{display:grid;grid-template-columns:1fr auto auto 1fr;gap:8px;font-size:12.5px;align-items:center}
+  .ibtn{width:24px;height:24px;border-radius:50%;border:1px solid var(--acc);background:transparent;color:var(--acc);font:italic 700 13px Georgia,serif;cursor:pointer;padding:0;line-height:22px;flex:none}
+  .ibtn.on{background:var(--acc);color:#1a1a1a}
+  .info{display:none;margin-top:6px;padding:8px 10px;background:var(--panel2);border-radius:8px;font-size:12.5px;line-height:1.6}
+  .info.show{display:grid}
+  .info .fa{font-size:13px;line-height:1.8}
+  .selrow{display:flex;gap:8px;align-items:center}
+  #resetView{position:absolute;left:8px;top:8px;width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:rgba(0,0,0,.55);color:var(--ink);font-size:20px;cursor:pointer}
+  .hint{font-size:11.5px;color:var(--mute);margin-top:6px}
+  .hint .fa{font-size:12px}
   .lab b{color:var(--acc);font-weight:600;white-space:nowrap;font-size:13px}
   .lab .fa{font-size:13px}
   input[type=range]{width:100%;accent-color:var(--acc);height:26px}
@@ -61,7 +70,7 @@
 <body>
 <div class="wrap">
   <div class="bi"><h1 class="en">Optics Lab: Candle, Lens &amp; Mirror</h1><h1 class="fa">آزمایشگاه نور: شمع، عدسی و آینه</h1></div>
-  <div class="bi sub"><div class="en">Drag the candle or the wall/screen on the drawing, or use the sliders. Heights are stretched vertically for clarity.</div><div class="fa">شمع یا دیوار/پرده را روی تصویر بکشید یا از نوارهای تنظیم استفاده کنید. ارتفاع‌ها برای وضوح بیشتر کشیده شده‌اند.</div></div>
+  <div class="bi sub"><div class="en">Explore how lenses and mirrors form images. Heights are stretched vertically for clarity.</div><div class="fa">ببینید عدسی‌ها و آینه‌ها چگونه تصویر می‌سازند. ارتفاع‌ها برای وضوح بیشتر کشیده شده‌اند.</div></div>
 
   <div class="tabs">
     <button id="tab_lens" class="on">Lens · <span class="fa">عدسی</span></button>
@@ -71,7 +80,9 @@
   <div id="stage">
     <canvas id="c"></canvas>
     <div class="inset"><span id="insetLab"></span><canvas id="wv"></canvas></div>
+    <button id="resetView" title="Reset view · بازنشانی نما">⟲</button>
   </div>
+  <div class="bi hint"><div class="en">Drag the candle, the lens/mirror or the wall. Two fingers: pan &amp; zoom. On a computer: right- or middle-drag to pan, wheel to zoom. ⟲ resets the view.</div><div class="fa">شمع، عدسی/آینه یا دیوار را بکشید. با دو انگشت جابه‌جا و بزرگ‌نمایی کنید. در رایانه: کشیدن با کلیک راست یا میانی برای جابه‌جایی و چرخ ماوس برای بزرگ‌نمایی. دکمهٔ ⟲ نما را بازنشانی می‌کند.</div></div>
 
   <div class="legend">
     <span><i style="background:#ffd54a"></i>Parallel ray · <span class="fa">پرتو موازی</span></span>
@@ -103,53 +114,75 @@
 {
 const $ = id => document.getElementById(id);
 
-// ---------- controls, grouped by feature ----------
-// slider: [id, en, fa, min, max, step, value, unit]
+// ---------- controls, grouped by how often they are used ----------
+const I = {
+  l_do:['How far the candle (the object) is from the lens. This is the object distance dₒ. You can also drag the candle or the lens on the drawing.','فاصلهٔ شمع (جسم) تا عدسی؛ به آن فاصلهٔ جسم (dₒ) می‌گویند. می‌توانید شمع یا عدسی را روی تصویر هم بکشید.'],
+  l_dw:['How far the wall is from the lens. The picture on the wall is sharp only when this equals the image distance dᵢ.','فاصلهٔ دیوار تا عدسی. تصویر روی دیوار فقط وقتی واضح است که این فاصله با فاصلهٔ تصویر (dᵢ) برابر باشد.'],
+  m_do:['How far the candle (the object) is in front of the mirror. This is the object distance dₒ. You can also drag the candle or the mirror on the drawing.','فاصلهٔ شمع (جسم) تا جلوی آینه؛ به آن فاصلهٔ جسم (dₒ) می‌گویند. می‌توانید شمع یا آینه را روی تصویر هم بکشید.'],
+  m_ds:['How far the screen is in front of the mirror. A real image is sharp on the screen only when this equals the image distance dᵢ.','فاصلهٔ پرده تا جلوی آینه. تصویر حقیقی فقط وقتی روی پرده واضح است که این فاصله با فاصلهٔ تصویر (dᵢ) برابر باشد.'],
+  ltype:['A convex lens brings light together (converging). A concave lens spreads light out (diverging).','عدسی کوژ نور را جمع می‌کند (همگرا) و عدسی کاو نور را پخش می‌کند (واگرا).'],
+  mtype:['A concave mirror curves inward and can focus light. A convex mirror bulges out and spreads light. A plane mirror is flat.','آینهٔ کاو به داخل خمیده است و می‌تواند نور را متمرکز کند. آینهٔ کوژ برآمده است و نور را پخش می‌کند. آینهٔ تخت صاف است.'],
+  l_R:['The radius of the sphere each lens surface is cut from. Smaller R means a more curved lens, a shorter focal length and a stronger lens.','شعاع کره‌ای که هر سطح عدسی بخشی از آن است. R کوچک‌تر یعنی عدسی خمیده‌تر، فاصلهٔ کانونی کوتاه‌تر و عدسی قوی‌تر.'],
+  m_R:['The radius of the sphere the mirror is part of. Its centre is the point C, and the focal length is half of it: f = R/2.','شعاع کره‌ای که آینه بخشی از آن است. مرکز آن نقطهٔ C است و فاصلهٔ کانونی نصف آن است: f = R/2.'],
+  l_n:['How strongly the glass slows down and bends light. Air ≈ 1, water ≈ 1.33, ordinary glass ≈ 1.5. Higher n makes a stronger lens.','میزان کند شدن و شکست نور در شیشه. هوا حدود ۱، آب حدود ۱٫۳۳ و شیشهٔ معمولی حدود ۱٫۵. n بیشتر عدسی را قوی‌تر می‌کند.'],
+  l_ap:['Half the height of the lens. A bigger opening collects more light: the image is brighter, but blurs more when it is out of focus.','نصف ارتفاع عدسی. دهانهٔ بزرگ‌تر نور بیشتری جمع می‌کند: تصویر روشن‌تر است، ولی وقتی در وضوح نیست تارتر می‌شود.'],
+  m_ap:['Half the height of the mirror. A bigger mirror collects more light: the image is brighter, but blurs more when it is out of focus.','نصف ارتفاع آینه. آینهٔ بزرگ‌تر نور بیشتری جمع می‌کند: تصویر روشن‌تر است، ولی وقتی در وضوح نیست تارتر می‌شود.'],
+  hc:['Height of the candle up to the flame tip (the object height). The image height is m times this.','ارتفاع شمع تا نوک شعله (ارتفاع جسم). ارتفاع تصویر m برابر این مقدار است.'],
+  nr:['How many sample rays are drawn from the flame tip. This is only for display; it does not change the physics.','تعداد پرتوهای نمونه که از نوک شعله رسم می‌شوند. فقط برای نمایش است و فیزیک را تغییر نمی‌دهد.']
+};
+const S_ = (id,en,fa,mn,mx,st,v,u,info) => ({id,en,fa,mn,mx,st,v,u,info:info||id});
 const GROUPS = {
   lens: [
-    {en:'Candle (object)', fa:'شمع (جسم)', items:[
-      ['l_do','Distance from lens','فاصله از عدسی',5,150,0.5,60,' cm'],
-      ['l_hc','Candle height','ارتفاع شمع',2,12,0.1,7,' cm']]},
+    {en:'Distances', fa:'فاصله‌ها', items:[
+      S_('l_do','Candle → lens','شمع ← عدسی',5,150,0.5,60,' cm'),
+      S_('l_dw','Lens → wall','عدسی ← دیوار',5,200,0.5,70,' cm'),
+      {button:'Move wall to sharp focus', fa:'بردن دیوار به نقطهٔ وضوح'}]},
     {en:'Lens', fa:'عدسی', items:[
       {select:'ltype', opts:[['convex','Convex — converging · کوژ (همگرا)'],['concave','Concave — diverging · کاو (واگرا)']]},
-      ['l_R','Radius of curvature R','شعاع انحنا R',10,100,0.5,30,' cm'],
-      ['l_n','Refractive index n','ضریب شکست n',1.3,1.9,0.01,1.5,''],
-      ['l_ap','Aperture (half-height)','نیم‌دهانهٔ عدسی',1.5,9,0.1,6,' cm']]},
-    {en:'Wall (screen)', fa:'دیوار (پرده)', items:[
-      ['l_dw','Distance from lens','فاصله از عدسی',5,200,0.5,70,' cm'],
-      {button:'Move wall to sharp focus', fa:'بردن دیوار به نقطهٔ وضوح'}]},
-    {en:'Display', fa:'نمایش', items:[
-      ['l_nr','Rays in the fan','تعداد پرتوها',0,25,1,11,'']]}
+      S_('l_R','Radius of curvature R','شعاع انحنا R',10,100,0.5,30,' cm'),
+      S_('l_n','Refractive index n','ضریب شکست n',1.3,1.9,0.01,1.5,''),
+      S_('l_ap','Aperture (half-height)','نیم‌دهانهٔ عدسی',1.5,9,0.1,6,' cm')]},
+    {en:'Extra settings', fa:'تنظیمات بیشتر', items:[
+      S_('l_hc','Candle height','ارتفاع شمع',2,12,0.1,7,' cm','hc'),
+      S_('l_nr','Rays in the fan','تعداد پرتوها',0,25,1,11,'','nr')]}
   ],
   mirror: [
-    {en:'Candle (object)', fa:'شمع (جسم)', items:[
-      ['m_do','Distance from mirror','فاصله از آینه',5,150,0.5,45,' cm'],
-      ['m_hc','Candle height','ارتفاع شمع',2,12,0.1,6,' cm']]},
+    {en:'Distances', fa:'فاصله‌ها', items:[
+      S_('m_do','Candle → mirror','شمع ← آینه',5,150,0.5,45,' cm'),
+      S_('m_ds','Mirror → screen','آینه ← پرده',5,150,0.5,80,' cm'),
+      {button:'Move screen to sharp focus', fa:'بردن پرده به نقطهٔ وضوح'}]},
     {en:'Mirror', fa:'آینه', items:[
       {select:'mtype', opts:[['concave','Concave · کاو (مقعر)'],['convex','Convex · کوژ (محدب)'],['plane','Plane (flat) · تخت']]},
-      ['m_R','Radius of curvature R','شعاع انحنا R',10,120,0.5,60,' cm'],
-      ['m_ap','Aperture (half-height)','نیم‌دهانهٔ آینه',1.5,9,0.1,6,' cm']]},
-    {en:'Screen', fa:'پرده', items:[
-      ['m_ds','Distance from mirror','فاصله از آینه',5,150,0.5,80,' cm'],
-      {button:'Move screen to sharp focus', fa:'بردن پرده به نقطهٔ وضوح'}]},
-    {en:'Display', fa:'نمایش', items:[
-      ['m_nr','Rays in the fan','تعداد پرتوها',0,25,1,11,'']]}
+      S_('m_R','Radius of curvature R','شعاع انحنا R',10,120,0.5,60,' cm'),
+      S_('m_ap','Aperture (half-height)','نیم‌دهانهٔ آینه',1.5,9,0.1,6,' cm')]},
+    {en:'Extra settings', fa:'تنظیمات بیشتر', items:[
+      S_('m_hc','Candle height','ارتفاع شمع',2,12,0.1,6,' cm','hc'),
+      S_('m_nr','Rays in the fan','تعداد پرتوها',0,25,1,11,'','nr')]}
   ]
 };
 const units = {};
+const infoBox = k => `<div class="info bi" data-for="${k}"><div class="en">${I[k][0]}</div><div class="fa">${I[k][1]}</div></div>`;
+const ibtn = k => `<button class="ibtn" data-info="${k}" aria-label="What is this? · این چیست؟">i</button>`;
+let uid = 0;
 $('groups').innerHTML = Object.entries(GROUPS).map(([mode, groups]) => groups.map(g => `
   <div class="group" data-mode="${mode}">
     <h4 class="bi"><span class="en">${g.en}</span><span class="fa">${g.fa}</span></h4>
     ${g.items.map(it => {
-      if (it.select) return `<div class="ctl"><select id="${it.select}">${it.opts.map(o=>`<option value="${o[0]}">${o[1]}</option>`).join('')}</select></div>`;
+      if (it.select) { const k = it.select + '_' + (uid++);
+        return `<div class="ctl"><div class="selrow"><select id="${it.select}">${it.opts.map(o=>`<option value="${o[0]}">${o[1]}</option>`).join('')}</select>${ibtn(k)}</div>${infoBox(it.select).replace(`data-for="${it.select}"`,`data-for="${k}"`)}</div>`; }
       if (it.button) return `<div class="ctl"><button class="btn focusBtn"><span class="en">${it.button}</span><span class="fa">${it.fa}</span></button></div>`;
-      const [id,en,fa,mn,mx,st,v,u] = it; units[id]=u;
-      return `<div class="ctl"><div class="lab"><span class="en">${en}</span><b id="v_${id}"></b><span class="fa">${fa}</span></div>
-        <input type="range" id="${id}" min="${mn}" max="${mx}" step="${st}" value="${v}"></div>`;
+      units[it.id] = it.u; const k = it.id + '_i';
+      return `<div class="ctl"><div class="lab"><span class="en">${it.en}</span><b id="v_${it.id}"></b>${ibtn(k)}<span class="fa">${it.fa}</span></div>
+        <input type="range" id="${it.id}" min="${it.mn}" max="${it.mx}" step="${it.st}" value="${it.v}">${infoBox(it.info).replace(`data-for="${it.info}"`,`data-for="${k}"`)}</div>`;
     }).join('')}
   </div>`).join('')).join('');
+$('groups').addEventListener('click', ev => {
+  const b = ev.target.closest('.ibtn'); if (!b) return;
+  const box = document.querySelector(`.info[data-for="${b.dataset.info}"]`);
+  b.classList.toggle('on', box.classList.toggle('show'));
+});
 
-const P = {};
+const P = {}, OFF = {lens:0, mirror:0}, view = {z:1, px:0, py:0};
 let mode = 'lens', flashMsg = -1e9;
 function readUI(){
   document.querySelectorAll('input[type=range]').forEach(inp => {
@@ -157,7 +190,7 @@ function readUI(){
     $('v_'+inp.id).textContent = inp.value + units[inp.id];
   });
   P.ltype = $('ltype').value; P.mtype = $('mtype').value;
-  $('v_m_R').parentElement.parentElement.style.opacity = P.mtype==='plane' ? .4 : 1;
+  $('m_R').closest('.ctl').style.opacity = P.mtype==='plane' ? .4 : 1;
   updateNote();
 }
 document.querySelectorAll('input,select').forEach(el => el.addEventListener('input', readUI));
@@ -166,6 +199,7 @@ document.querySelectorAll('select').forEach(el => el.addEventListener('change', 
 function setMode(m){
   mode = m;
   document.body.classList.toggle('mirror', m==='mirror');
+  view.z = 1; view.px = 0; view.py = 0;
   $('tab_lens').classList.toggle('on', m==='lens');
   $('tab_mirror').classList.toggle('on', m==='mirror');
   document.querySelectorAll('.group').forEach(g => g.classList.toggle('hidden', g.dataset.mode!==m));
@@ -181,10 +215,10 @@ $('tab_mirror').onclick = () => setMode('mirror');
 function cur(){
   if (mode==='lens'){
     let f = P.l_R/(2*(P.l_n-1)); if (P.ltype==='concave') f = -f;
-    return {d:P.l_do, hc:P.l_hc, ap:P.l_ap, ds:P.l_dw, nr:P.l_nr, f, R:P.l_R, type:P.ltype};
+    return {d:P.l_do, hc:P.l_hc, ap:P.l_ap, ds:P.l_dw, nr:P.l_nr, f, R:P.l_R, type:P.ltype, off:OFF.lens};
   }
   let f = P.mtype==='plane' ? Infinity : P.m_R/2; if (P.mtype==='convex') f = -f;
-  return {d:P.m_do, hc:P.m_hc, ap:P.m_ap, ds:P.m_ds, nr:P.m_nr, f, R:P.m_R, type:P.mtype};
+  return {d:P.m_do, hc:P.m_hc, ap:P.m_ap, ds:P.m_ds, nr:P.m_nr, f, R:P.m_R, type:P.mtype, off:OFF.mirror};
 }
 const imageOf = (d,f) => !isFinite(f) ? -d : (Math.abs(d-f) < 1e-6 ? Infinity : 1/(1/f - 1/d));
 const slopeOut = (d,hc,f,yl) => (yl-hc)/d - (isFinite(f) ? yl/f : 0);
@@ -256,7 +290,8 @@ function resize(){
 }
 window.addEventListener('resize', resize); resize();
 const sx = () => W/(X1-X0), sy = () => H/(2*YMAX);
-const tx = x => (x - X0)*sx(), ty = y => H/2 - y*sy();
+let curOff = 0;
+const tx = x => (x + curOff - X0)*sx(), ty = y => H/2 - y*sy(), rtx = a => (a - X0)*sx();
 const FONT = '11px Vazirmatn, Tahoma, system-ui, sans-serif';
 
 function line(x1,y1,x2,y2,color,w=1.5,dash=null,alpha=1){
@@ -290,22 +325,29 @@ function drawCandle(c, px, py, hpx, t, opts={}){
 }
 function axis(){
   ctx.font = FONT; ctx.textAlign = 'center'; ctx.fillStyle = '#6b7385';
-  for (let x = -150; x <= X1; x += 25){
-    ctx.fillRect(tx(x), H/2-3, 1, 6);
-    if (x % 50 === 0 && x !== 0) ctx.fillText(x, tx(x), H/2+16);
+  for (let x = -500; x <= 500; x += 25){
+    ctx.fillRect(rtx(x), H/2-3, 1, 6);
+    if (x % 50 === 0) ctx.fillText(x, rtx(x), H/2+16);
   }
-  line(X0,0,X1,0,'#4a5266',1);
+  ctx.fillRect(rtx(-2000), H/2-0.5, rtx(2000)-rtx(-2000), 1);
 }
 function marks(list){
   list.forEach(([x,lab,main]) => {
-    if (!isFinite(x) || x < X0 || x > X1) return;
+    if (!isFinite(x) || Math.abs(x) > 2000) return;
     ctx.fillStyle = main ? '#ff6ad5' : '#a07ab3';
     ctx.beginPath(); ctx.arc(tx(x), ty(0), main?4:3, 0, Math.PI*2); ctx.fill();
     ctx.fillText(lab, tx(x), ty(0)-8);
   });
 }
 function drawImage(t, xImg, m, hc, real){
-  if (isFinite(xImg) && xImg > X0 && xImg < X1 && Math.abs(m*hc) < YMAX*1.5){
+  const scrX = isFinite(xImg) ? tx(xImg)*view.z + view.px : NaN;
+  if (isFinite(xImg) && (scrX < 0 || scrX > W)){
+    ctx.save(); ctx.setTransform(dpr,0,0,dpr,0,0); ctx.font = FONT; ctx.fillStyle = '#d6d9e0';
+    ctx.textAlign = scrX < 0 ? 'left' : 'right';
+    ctx.fillText(scrX < 0 ? '◀ image · تصویر' : 'image · تصویر ▶', scrX < 0 ? 8 : W-8, H-28);
+    ctx.restore();
+  }
+  if (isFinite(xImg) && Math.abs(xImg) < 1500 && Math.abs(m*hc) < YMAX*4){
     drawCandle(ctx, tx(xImg), ty(0), m*hc*sy(), t, {ghost: real, dashed: !real});
     ctx.fillStyle = real ? '#ffcf8a' : '#d6d9e0';
     ctx.fillText(real ? 'real image · تصویر حقیقی' : 'virtual image · تصویر مجازی', tx(xImg), m>0 ? ty(0)-m*hc*sy()-8 : ty(0)-24);
@@ -318,13 +360,13 @@ function drawImage(t, xImg, m, hc, real){
 
 function drawLens(t, c){
   const {d,hc,ap,ds:dw,nr,f,R,type} = c, di = imageOf(d,f), m = -di/d;
-  X0 = RANGE.lens[0]; X1 = RANGE.lens[1];
+  X0 = RANGE.lens[0]; X1 = RANGE.lens[1]; curOff = c.off;
   axis();
   marks([[f,'F′',1],[-f,'F',1],[2*f,'2F′'],[-2*f,'2F']]);
   const wx = tx(dw);
-  ctx.fillStyle = '#3d4659'; ctx.fillRect(wx, 0, 7, H);
-  ctx.fillStyle = '#aab1bf'; ctx.fillText('wall · دیوار', Math.min(wx, W-34), H-6);
-  ctx.save(); ctx.beginPath(); ctx.rect(0,0,wx,H); ctx.clip();
+  ctx.fillStyle = '#3d4659'; ctx.fillRect(wx, -3*H, 7, 7*H);
+  ctx.fillStyle = '#aab1bf'; ctx.fillText('wall · دیوار', wx, H-6);
+  ctx.save(); ctx.beginPath(); ctx.rect(-1e5,-1e5,wx+1e5,2e5); ctx.clip();
   const hits = [];
   for (let i = 0; i < nr; i++){
     const yl = nr === 1 ? 0 : -ap*0.97 + 2*ap*0.97*i/(nr-1), so = slopeOut(d,hc,f,yl), yw = yl + so*dw;
@@ -354,7 +396,7 @@ function drawLens(t, c){
 
 function drawMirror(t, c){
   const {d,hc,ap,ds,nr,f,R,type} = c, di = imageOf(d,f), m = -di/d;
-  X0 = RANGE.mirror[0]; X1 = RANGE.mirror[1];
+  X0 = RANGE.mirror[0]; X1 = RANGE.mirror[1]; curOff = c.off;
   axis();
   if (isFinite(f)) marks([[-f,'F',1],[-2*f,'C']]);
   // mirror surface offset (drawn at vertical scale so the curve is true-shape)
@@ -363,7 +405,7 @@ function drawMirror(t, c){
   // screen
   const sxp = tx(-ds);
   ctx.fillStyle = 'rgba(200,190,215,0.35)'; ctx.fillRect(sxp-6, ty(YMAX*0.8), 6, H*0.8);
-  ctx.fillStyle = '#c9bdd4'; ctx.fillText('screen · پرده', Math.max(sxp, 36), H-6);
+  ctx.fillStyle = '#c9bdd4'; ctx.fillText('screen · پرده', sxp, H-6);
   const hits = [];
   for (let i = 0; i < nr; i++){
     const yl = nr === 1 ? 0 : -ap*0.97 + 2*ap*0.97*i/(nr-1), so = slopeOut(d,hc,f,yl), ys = yl + so*ds;
@@ -415,6 +457,7 @@ function drawInset(t, hits, d, hc, f, dist){
 function draw(t){
   const c = cur();
   ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,H);
+  ctx.setTransform(dpr*view.z,0,0,dpr*view.z,dpr*view.px,dpr*view.py);
   const {di, m, hits} = mode==='lens' ? drawLens(t,c) : drawMirror(t,c);
   const blur = drawInset(t, hits, c.d, c.hc, c.f, c.ds);
   const L = mode==='lens';
@@ -435,25 +478,92 @@ function draw(t){
   }
 }
 
-// ---------- dragging ----------
-let drag = null;
-const worldX = ev => (ev.clientX - cv.getBoundingClientRect().left)/sx() + X0;
+// ---------- interaction: drag objects, pan & zoom ----------
+const pts = new Map();
+let drag = null, pinch = null, panDrag = null;
+const local = ev => { const r = cv.getBoundingClientRect(); return {x: ev.clientX - r.left, y: ev.clientY - r.top}; };
+const absX = px => ((px - view.px)/view.z)/sx() + X0;     // screen px -> world x (room coordinates)
 function targets(){
-  const c = cur();
-  return mode==='lens'
-    ? [{id:'l_do', x:-c.d, set:x=>-x}, {id:'l_dw', x:c.ds, set:x=>x}]
-    : [{id:'m_do', x:-c.d, set:x=>-x}, {id:'m_ds', x:-c.ds, set:x=>-x}];
+  const c = cur(), L = mode==='lens';
+  return [
+    {kind:'candle', x: c.off - c.d},
+    {kind:'element', x: c.off},
+    {kind:'wall', x: L ? c.off + c.ds : c.off - c.ds}
+  ];
 }
-const near = x => { const tol = Math.max(14/sx(), 4); return targets().find(g => Math.abs(x-g.x) < tol); };
-cv.addEventListener('pointerdown', ev => { drag = near(worldX(ev)); if (drag) cv.setPointerCapture(ev.pointerId); });
-cv.addEventListener('pointermove', ev => {
-  const x = worldX(ev);
-  if (!drag){ cv.style.cursor = near(x) ? 'ew-resize' : 'default'; return; }
-  const inp = $(drag.id);
-  inp.value = Math.min(+inp.max, Math.max(+inp.min, drag.set(x))).toFixed(1);
+function hit(px){
+  const x = absX(px), tol = Math.max(18/view.z/sx(), 3);
+  let best = null;
+  targets().forEach(t => { const d = Math.abs(t.x - x); if (d < tol && (!best || d < best.d)) best = {...t, d}; });
+  return best;
+}
+const clampIn = (id, v) => Math.min(+$(id).max, Math.max(+$(id).min, v));
+function setVal(id, v){ $(id).value = (+clampIn(id, v).toFixed(1)); }
+function applyDrag(x){
+  const L = mode==='lens', c = cur(), ido = L ? 'l_do' : 'm_do', ids = L ? 'l_dw' : 'm_ds';
+  if (drag.kind === 'candle') setVal(ido, c.off - x);
+  else if (drag.kind === 'wall') setVal(ids, L ? x - c.off : c.off - x);
+  else {
+    // move the lens/mirror; candle and wall stay where they are in the room
+    const candleX = c.off - c.d, wallX = L ? c.off + c.ds : c.off - c.ds;
+    let off = x - drag.grab;
+    const lo = L ? Math.max(candleX + +$(ido).min, wallX - +$(ids).max) : Math.max(candleX + +$(ido).min, wallX + +$(ids).min);
+    const hi = L ? Math.min(candleX + +$(ido).max, wallX - +$(ids).min) : Math.min(candleX + +$(ido).max, wallX + +$(ids).max);
+    off = Math.min(hi, Math.max(lo, off));
+    OFF[mode] = off;
+    setVal(ido, off - candleX);
+    setVal(ids, L ? wallX - off : off - wallX);
+    OFF[mode] = L ? +$(ido).value + candleX : +$(ido).value + candleX;
+  }
   readUI();
+}
+function startPinch(){
+  const [a, b] = [...pts.values()];
+  pinch = {c0:{x:(a.x+b.x)/2, y:(a.y+b.y)/2}, d0:Math.hypot(a.x-b.x, a.y-b.y) || 1, z0:view.z, px0:view.px, py0:view.py};
+}
+const clampZ = z => Math.min(6, Math.max(0.35, z));
+cv.addEventListener('pointerdown', ev => {
+  const p = local(ev);
+  cv.setPointerCapture(ev.pointerId);
+  if (ev.pointerType === 'mouse' && (ev.button === 1 || ev.button === 2)){
+    ev.preventDefault(); panDrag = {x:p.x, y:p.y, px:view.px, py:view.py}; return;
+  }
+  pts.set(ev.pointerId, p);
+  if (pts.size === 2){ drag = null; startPinch(); return; }
+  if (pts.size === 1){
+    drag = hit(p.x);
+    if (drag && drag.kind === 'element') drag.grab = absX(p.x) - cur().off;
+  }
 });
-['pointerup','pointercancel'].forEach(e => cv.addEventListener(e, () => drag = null));
+cv.addEventListener('pointermove', ev => {
+  const p = local(ev);
+  if (panDrag){ view.px = panDrag.px + p.x - panDrag.x; view.py = panDrag.py + p.y - panDrag.y; return; }
+  if (pts.has(ev.pointerId)) pts.set(ev.pointerId, p);
+  if (pinch && pts.size >= 2){
+    const [a, b] = [...pts.values()], c = {x:(a.x+b.x)/2, y:(a.y+b.y)/2};
+    const z = clampZ(pinch.z0 * Math.hypot(a.x-b.x, a.y-b.y) / pinch.d0);
+    const bx = (pinch.c0.x - pinch.px0)/pinch.z0, by = (pinch.c0.y - pinch.py0)/pinch.z0;
+    view.z = z; view.px = c.x - bx*z; view.py = c.y - by*z;
+    return;
+  }
+  if (drag){ applyDrag(absX(p.x)); return; }
+  if (ev.pointerType === 'mouse') cv.style.cursor = hit(p.x) ? 'ew-resize' : 'default';
+});
+const endPtr = ev => {
+  pts.delete(ev.pointerId);
+  if (pts.size < 2) pinch = null;
+  if (pts.size === 0) drag = null;
+  panDrag = null;
+};
+['pointerup','pointercancel','lostpointercapture'].forEach(e => cv.addEventListener(e, endPtr));
+cv.addEventListener('contextmenu', ev => ev.preventDefault());
+cv.addEventListener('wheel', ev => {
+  ev.preventDefault();
+  const p = local(ev), z = clampZ(view.z * Math.exp(-ev.deltaY*0.0015));
+  const bx = (p.x - view.px)/view.z, by = (p.y - view.py)/view.z;
+  view.z = z; view.px = p.x - bx*z; view.py = p.y - by*z;
+}, {passive:false});
+$('resetView').onclick = () => { view.z = 1; view.px = 0; view.py = 0; };
 
 readUI(); setMode('lens');
 (function loop(t){ draw(t||0); requestAnimationFrame(loop); })();
