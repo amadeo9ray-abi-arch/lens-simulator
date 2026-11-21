@@ -3,110 +3,250 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Candle · Lens · Image</title>
+<title>Optics Lab · آزمایشگاه نور</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{--bg:#0f1115;--panel:#171a22;--ink:#e8e6e3;--mute:#9aa0ab;--acc:#ffb347}
+  :root{--bg:#0e1420;--panel:#171e2d;--panel2:#1f2739;--line:#33405a;--ink:#e9e7e3;--mute:#9ba3b2;--acc:#ffb347;--stage:#141b29}
+  body.mirror{--bg:#1c0f22;--panel:#2a1733;--panel2:#352040;--line:#57396a;--mute:#b7a3c2;--acc:#6fe0cf;--stage:#22132a}
   *{box-sizing:border-box}
-  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
-  .wrap{max-width:1050px;margin:0 auto;padding:12px}
-  h1{font-size:18px;margin:4px 0 2px}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink);transition:background .35s}
+  .fa{font-family:Vazirmatn,Tahoma,sans-serif;direction:rtl;text-align:right}
+  .en{direction:ltr;text-align:left}
+  .wrap{max-width:1080px;margin:0 auto;padding:12px}
+  .bi{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:baseline}
+  h1{font-size:17px;margin:4px 0}
+  h1 .fa{font-size:18px}
   .sub{color:var(--mute);font-size:12px;margin-bottom:10px}
+  .tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0 10px}
+  .tabs button{padding:10px;font-size:14px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+  .tabs button.on{background:var(--acc);color:#1a1a1a;border-color:var(--acc);font-weight:600}
+  .tabs .fa{text-align:center;display:inline}
   #stage{position:relative}
-  #c{width:100%;height:340px;display:block;background:var(--panel);border-radius:12px;touch-action:none;cursor:default}
-  .inset{position:absolute;right:8px;top:8px;background:#000;border:1px solid #3a3f4c;border-radius:8px;padding:4px;text-align:center}
-  @media (max-width:600px){#wv{width:80px!important;height:80px!important}.inset{top:auto;bottom:8px}}
+  #c{width:100%;height:340px;display:block;background:var(--stage);border-radius:12px;touch-action:none}
+  .inset{position:absolute;right:8px;top:8px;background:#000;border:1px solid var(--line);border-radius:8px;padding:4px;text-align:center}
   .inset span{display:block;font-size:10px;color:var(--mute);margin-bottom:2px}
   #wv{width:110px;height:110px;display:block;background:#08090c;border-radius:4px}
-  .controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px 20px;margin-top:12px;background:var(--panel);padding:12px;border-radius:12px}
-  .ctl label{display:flex;justify-content:space-between;font-size:13px;margin-bottom:2px}
-  .ctl b{color:var(--acc);font-weight:600}
-  input[type=range]{width:100%;accent-color:var(--acc)}
-  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-  select,button{background:#232837;color:var(--ink);border:1px solid #3a3f4c;border-radius:8px;padding:7px 10px;font-size:13px}
-  button:active{transform:scale(.97)}
-  .readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:12px}
-  .readout div{background:var(--panel);padding:8px 10px;border-radius:8px;font-size:13px}
-  .readout small{display:block;color:var(--mute);font-size:11px}
-  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--mute);margin-top:8px}
+  @media (max-width:600px){#wv{width:80px;height:80px}.inset{top:auto;bottom:8px}}
+  .legend{display:flex;gap:6px 14px;flex-wrap:wrap;font-size:11.5px;color:var(--mute);margin-top:8px}
   .legend i{display:inline-block;width:14px;height:3px;vertical-align:middle;margin-right:5px;border-radius:2px}
+  .note{background:var(--panel);border-radius:12px;padding:12px;margin-top:12px;border-inline-start:4px solid var(--acc)}
+  .note h3{margin:0 0 6px;font-size:14px;color:var(--acc)}
+  .note p{margin:0;font-size:13.5px;line-height:1.6}
+  .note .fa p{font-size:14px;line-height:1.9}
+  .now{margin-top:10px;padding:8px 10px;background:var(--panel2);border-radius:8px;font-size:13px}
+  .now b{color:var(--acc)}
+  .groups{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:10px;margin-top:12px}
+  .group{background:var(--panel);border-radius:12px;padding:10px 12px;border:1px solid var(--line)}
+  .group h4{margin:0 0 8px;font-size:13px;color:var(--acc);padding-bottom:6px;border-bottom:1px solid var(--line)}
+  .ctl{margin:8px 0}
+  .lab{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;font-size:12.5px;align-items:center}
+  .lab b{color:var(--acc);font-weight:600;white-space:nowrap;font-size:13px}
+  .lab .fa{font-size:13px}
+  input[type=range]{width:100%;accent-color:var(--acc);height:26px}
+  select,.btn{width:100%;background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:9px 10px;font-size:13px;font-family:inherit}
+  .btn{cursor:pointer;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .btn:active{transform:scale(.98)}
+  .readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:8px;margin-top:12px}
+  .readout>div{background:var(--panel);padding:8px 10px;border-radius:8px;font-size:13px}
+  .readout small{color:var(--mute);font-size:11px}
+  .val{margin-top:3px}
   .ok{color:#7be38a}.warn{color:#ffb86b}
+  .hidden{display:none!important}
+  footer{color:var(--mute);font-size:11px;text-align:center;margin:16px 0 8px}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>Candle · Lens · Image</h1>
-  <div class="sub">Drag the candle or the wall on the diagram, or use the sliders. Heights are exaggerated vertically for clarity.</div>
+  <div class="bi"><h1 class="en">Optics Lab: Candle, Lens &amp; Mirror</h1><h1 class="fa">آزمایشگاه نور: شمع، عدسی و آینه</h1></div>
+  <div class="bi sub"><div class="en">Drag the candle or the wall/screen on the drawing, or use the sliders. Heights are stretched vertically for clarity.</div><div class="fa">شمع یا دیوار/پرده را روی تصویر بکشید یا از نوارهای تنظیم استفاده کنید. ارتفاع‌ها برای وضوح بیشتر کشیده شده‌اند.</div></div>
+
+  <div class="tabs">
+    <button id="tab_lens" class="on">Lens · <span class="fa">عدسی</span></button>
+    <button id="tab_mirror">Mirror · <span class="fa">آینه</span></button>
+  </div>
 
   <div id="stage">
     <canvas id="c"></canvas>
-    <div class="inset"><span>Seen on the wall</span><canvas id="wv"></canvas></div>
+    <div class="inset"><span id="insetLab"></span><canvas id="wv"></canvas></div>
   </div>
 
   <div class="legend">
-    <span><i style="background:#ffd54a"></i>Parallel ray</span>
-    <span><i style="background:#4fd1ff"></i>Centre ray</span>
-    <span><i style="background:#ff6ad5"></i>Focal ray</span>
-    <span><i style="background:rgba(255,170,80,.6)"></i>Ray fan through lens</span>
-    <span><i style="background:#fff;opacity:.5"></i>Dashed = virtual</span>
+    <span><i style="background:#ffd54a"></i>Parallel ray · <span class="fa">پرتو موازی</span></span>
+    <span><i style="background:#4fd1ff"></i>Centre ray · <span class="fa">پرتو مرکزی</span></span>
+    <span><i style="background:#ff6ad5"></i>Focal ray · <span class="fa">پرتو کانونی</span></span>
+    <span><i style="background:rgba(255,170,80,.7)"></i>Ray fan · <span class="fa">دستهٔ پرتوها</span></span>
+    <span><i style="background:#fff;opacity:.5"></i>Dashed = virtual · <span class="fa">خط‌چین = مجازی</span></span>
   </div>
 
-  <div class="controls">
-    <div class="ctl"><label><span>Candle distance (d<sub>o</sub>)</span> <b id="v_do"></b></label><input id="do" type="range" min="5" max="150" step="0.5" value="60"></div>
-    <div class="ctl"><label><span>Wall distance</span> <b id="v_dw"></b></label><input id="dw" type="range" min="5" max="200" step="0.5" value="70"></div>
-    <div class="ctl"><label><span>Lens curvature radius R</span> <b id="v_R"></b></label><input id="R" type="range" min="10" max="100" step="0.5" value="30"></div>
-    <div class="ctl"><label><span>Refractive index n</span> <b id="v_n"></b></label><input id="n" type="range" min="1.3" max="1.9" step="0.01" value="1.5"></div>
-    <div class="ctl"><label><span>Lens aperture (half-height)</span> <b id="v_ap"></b></label><input id="ap" type="range" min="1.5" max="9" step="0.1" value="6"></div>
-    <div class="ctl"><label><span>Candle height</span> <b id="v_hc"></b></label><input id="hc" type="range" min="2" max="12" step="0.1" value="7"></div>
-    <div class="ctl"><label><span>Number of rays in fan</span> <b id="v_nr"></b></label><input id="nr" type="range" min="0" max="25" step="1" value="11"></div>
-    <div class="ctl row">
-      <select id="type"><option value="convex">Convex (converging)</option><option value="concave">Concave (diverging)</option></select>
-      <button id="focus">Move wall to focus</button>
-    </div>
+  <div class="note">
+    <div class="bi"><h3 class="en" id="noteTitleEn"></h3><h3 class="fa" id="noteTitleFa"></h3></div>
+    <div class="bi"><div class="en"><p id="noteEn"></p></div><div class="fa"><p id="noteFa"></p></div></div>
+    <div class="now bi"><div class="en"><b>Right now:</b> <span id="nowEn"></span></div><div class="fa"><b>هم‌اکنون:</b> <span id="nowFa"></span></div></div>
   </div>
+
+  <div class="groups" id="groups"></div>
 
   <div class="readout">
-    <div><small>Focal length f = R / 2(n−1)</small><span id="r_f"></span></div>
-    <div><small>Image distance d<sub>i</sub></small><span id="r_di"></span></div>
-    <div><small>Magnification m = −d<sub>i</sub>/d<sub>o</sub></small><span id="r_m"></span></div>
-    <div><small>Image type</small><span id="r_type"></span></div>
-    <div><small>On the wall</small><span id="r_wall"></span></div>
+    <div><div class="bi"><small class="en">Focal length f</small><small class="fa">فاصلهٔ کانونی</small></div><div class="val" id="r_f"></div></div>
+    <div><div class="bi"><small class="en">Image distance d<sub>i</sub></small><small class="fa">فاصلهٔ تصویر</small></div><div class="val" id="r_di"></div></div>
+    <div><div class="bi"><small class="en">Magnification m = −d<sub>i</sub>/d<sub>o</sub></small><small class="fa">بزرگنمایی</small></div><div class="val" id="r_m"></div></div>
+    <div><div class="bi"><small class="en">Image type</small><small class="fa">نوع تصویر</small></div><div class="val bi" id="r_type"></div></div>
+    <div><div class="bi"><small class="en" id="r_wallEn">On the wall</small><small class="fa" id="r_wallFa">روی دیوار</small></div><div class="val bi" id="r_wall"></div></div>
   </div>
+  <footer>Thin-lens / paraxial model · <span class="fa">مدل عدسی نازک و پرتوهای نزدیک محور</span></footer>
 </div>
 
 <script>
+{
 const $ = id => document.getElementById(id);
-const S = {};
-const keys = ['do','dw','R','n','ap','hc','nr'];
-const units = {do:' cm',dw:' cm',R:' cm',n:'',ap:' cm',hc:' cm',nr:''};
-function readUI(){
-  keys.forEach(k => { S[k] = parseFloat($(k).value); $('v_'+k).textContent = S[k] + units[k]; });
-  S.type = $('type').value;
-}
-keys.forEach(k => $(k).addEventListener('input', readUI));
-$('type').addEventListener('change', readUI);
-readUI();
 
-function optics(){
-  let f = S.R / (2*(S.n-1));
-  if (S.type === 'concave') f = -f;
-  const d = S.do;
-  const di = Math.abs(d - f) < 1e-6 ? Infinity : 1/(1/f - 1/d);
-  const m = isFinite(di) ? -di/d : Infinity;
-  return {f, di, m};
-}
-
-$('focus').onclick = () => {
-  const {di} = optics();
-  if (isFinite(di) && di > 5 && di <= 200){ $('dw').value = di.toFixed(1); readUI(); }
-  else { $('r_wall').innerHTML = '<span class="warn">No real image in range to focus on</span>'; flashMsg = performance.now(); }
+// ---------- controls, grouped by feature ----------
+// slider: [id, en, fa, min, max, step, value, unit]
+const GROUPS = {
+  lens: [
+    {en:'Candle (object)', fa:'شمع (جسم)', items:[
+      ['l_do','Distance from lens','فاصله از عدسی',5,150,0.5,60,' cm'],
+      ['l_hc','Candle height','ارتفاع شمع',2,12,0.1,7,' cm']]},
+    {en:'Lens', fa:'عدسی', items:[
+      {select:'ltype', opts:[['convex','Convex — converging · کوژ (همگرا)'],['concave','Concave — diverging · کاو (واگرا)']]},
+      ['l_R','Radius of curvature R','شعاع انحنا R',10,100,0.5,30,' cm'],
+      ['l_n','Refractive index n','ضریب شکست n',1.3,1.9,0.01,1.5,''],
+      ['l_ap','Aperture (half-height)','نیم‌دهانهٔ عدسی',1.5,9,0.1,6,' cm']]},
+    {en:'Wall (screen)', fa:'دیوار (پرده)', items:[
+      ['l_dw','Distance from lens','فاصله از عدسی',5,200,0.5,70,' cm'],
+      {button:'Move wall to sharp focus', fa:'بردن دیوار به نقطهٔ وضوح'}]},
+    {en:'Display', fa:'نمایش', items:[
+      ['l_nr','Rays in the fan','تعداد پرتوها',0,25,1,11,'']]}
+  ],
+  mirror: [
+    {en:'Candle (object)', fa:'شمع (جسم)', items:[
+      ['m_do','Distance from mirror','فاصله از آینه',5,150,0.5,45,' cm'],
+      ['m_hc','Candle height','ارتفاع شمع',2,12,0.1,6,' cm']]},
+    {en:'Mirror', fa:'آینه', items:[
+      {select:'mtype', opts:[['concave','Concave · کاو (مقعر)'],['convex','Convex · کوژ (محدب)'],['plane','Plane (flat) · تخت']]},
+      ['m_R','Radius of curvature R','شعاع انحنا R',10,120,0.5,60,' cm'],
+      ['m_ap','Aperture (half-height)','نیم‌دهانهٔ آینه',1.5,9,0.1,6,' cm']]},
+    {en:'Screen', fa:'پرده', items:[
+      ['m_ds','Distance from mirror','فاصله از آینه',5,150,0.5,80,' cm'],
+      {button:'Move screen to sharp focus', fa:'بردن پرده به نقطهٔ وضوح'}]},
+    {en:'Display', fa:'نمایش', items:[
+      ['m_nr','Rays in the fan','تعداد پرتوها',0,25,1,11,'']]}
+  ]
 };
-let flashMsg = -1e9;
+const units = {};
+$('groups').innerHTML = Object.entries(GROUPS).map(([mode, groups]) => groups.map(g => `
+  <div class="group" data-mode="${mode}">
+    <h4 class="bi"><span class="en">${g.en}</span><span class="fa">${g.fa}</span></h4>
+    ${g.items.map(it => {
+      if (it.select) return `<div class="ctl"><select id="${it.select}">${it.opts.map(o=>`<option value="${o[0]}">${o[1]}</option>`).join('')}</select></div>`;
+      if (it.button) return `<div class="ctl"><button class="btn focusBtn"><span class="en">${it.button}</span><span class="fa">${it.fa}</span></button></div>`;
+      const [id,en,fa,mn,mx,st,v,u] = it; units[id]=u;
+      return `<div class="ctl"><div class="lab"><span class="en">${en}</span><b id="v_${id}"></b><span class="fa">${fa}</span></div>
+        <input type="range" id="${id}" min="${mn}" max="${mx}" step="${st}" value="${v}"></div>`;
+    }).join('')}
+  </div>`).join('')).join('');
 
-// ---------- canvas setup ----------
-const cv = $('c'), ctx = cv.getContext('2d');
-const wv = $('wv'), wctx = wv.getContext('2d');
-let W, H, dpr;
-const X0 = -158, X1 = 208, YMAX = 15;
+const P = {};
+let mode = 'lens', flashMsg = -1e9;
+function readUI(){
+  document.querySelectorAll('input[type=range]').forEach(inp => {
+    P[inp.id] = parseFloat(inp.value);
+    $('v_'+inp.id).textContent = inp.value + units[inp.id];
+  });
+  P.ltype = $('ltype').value; P.mtype = $('mtype').value;
+  $('v_m_R').parentElement.parentElement.style.opacity = P.mtype==='plane' ? .4 : 1;
+  updateNote();
+}
+document.querySelectorAll('input,select').forEach(el => el.addEventListener('input', readUI));
+document.querySelectorAll('select').forEach(el => el.addEventListener('change', readUI));
+
+function setMode(m){
+  mode = m;
+  document.body.classList.toggle('mirror', m==='mirror');
+  $('tab_lens').classList.toggle('on', m==='lens');
+  $('tab_mirror').classList.toggle('on', m==='mirror');
+  document.querySelectorAll('.group').forEach(g => g.classList.toggle('hidden', g.dataset.mode!==m));
+  $('insetLab').textContent = m==='lens' ? 'On the wall · روی دیوار' : 'On the screen · روی پرده';
+  $('r_wallEn').textContent = m==='lens' ? 'On the wall' : 'On the screen';
+  $('r_wallFa').textContent = m==='lens' ? 'روی دیوار' : 'روی پرده';
+  updateNote();
+}
+$('tab_lens').onclick = () => setMode('lens');
+$('tab_mirror').onclick = () => setMode('mirror');
+
+// ---------- physics ----------
+function cur(){
+  if (mode==='lens'){
+    let f = P.l_R/(2*(P.l_n-1)); if (P.ltype==='concave') f = -f;
+    return {d:P.l_do, hc:P.l_hc, ap:P.l_ap, ds:P.l_dw, nr:P.l_nr, f, R:P.l_R, type:P.ltype};
+  }
+  let f = P.mtype==='plane' ? Infinity : P.m_R/2; if (P.mtype==='convex') f = -f;
+  return {d:P.m_do, hc:P.m_hc, ap:P.m_ap, ds:P.m_ds, nr:P.m_nr, f, R:P.m_R, type:P.mtype};
+}
+const imageOf = (d,f) => !isFinite(f) ? -d : (Math.abs(d-f) < 1e-6 ? Infinity : 1/(1/f - 1/d));
+const slopeOut = (d,hc,f,yl) => (yl-hc)/d - (isFinite(f) ? yl/f : 0);
+
+document.querySelectorAll('.focusBtn').forEach(b => b.onclick = () => {
+  const c = cur(), di = imageOf(c.d, c.f), id = mode==='lens' ? 'l_dw' : 'm_ds', max = +$(id).max;
+  if (isFinite(di) && di >= 5 && di <= max){ $(id).value = di.toFixed(1); readUI(); }
+  else {
+    $('r_wall').innerHTML = '<span class="en warn">No real image in range to focus</span><span class="fa warn">تصویر حقیقی در این محدوده نیست</span>';
+    flashMsg = performance.now();
+  }
+});
+
+// ---------- teaching notes ----------
+const NOTES = {
+  'lens-convex': ['Convex (converging) lens','عدسی کوژ (همگرا)',
+    'A convex lens is thicker in the middle. It bends light rays toward each other, so parallel rays meet at the focal point F′. If the candle is farther than F, the rays meet on the other side and make a real, upside-down image you can catch on a wall. Slide the wall until the picture is sharp. If the candle is closer than F, the rays spread out and you see a bigger, upright virtual image through the lens, like a magnifying glass.',
+    'عدسی کوژ در وسط ضخیم‌تر است. پرتوهای نور را به هم نزدیک می‌کند و پرتوهای موازی در کانون F′ به هم می‌رسند. اگر شمع دورتر از F باشد، پرتوها در آن سوی عدسی به هم می‌رسند و تصویری حقیقی و وارونه می‌سازند که روی دیوار می‌افتد. دیوار را جابه‌جا کنید تا تصویر واضح شود. اگر شمع نزدیک‌تر از F باشد، پرتوها از هم دور می‌شوند و از پشت عدسی تصویری مجازی، مستقیم و بزرگ‌تر می‌بینید؛ مثل ذره‌بین.'],
+  'lens-concave': ['Concave (diverging) lens','عدسی کاو (واگرا)',
+    'A concave lens is thinner in the middle. It spreads light rays apart, so they never meet on the other side. Your eye follows them backwards and sees a small, upright virtual image on the same side as the candle. That is why it can never put a sharp picture on the wall. Glasses for short-sighted people use this kind of lens.',
+    'عدسی کاو در وسط نازک‌تر است. پرتوهای نور را از هم دور می‌کند، پس در آن سوی عدسی هرگز به هم نمی‌رسند. چشم ما امتداد پرتوها را به عقب دنبال می‌کند و تصویری مجازی، مستقیم و کوچک‌تر در همان سمت شمع می‌بیند. برای همین هیچ‌وقت تصویر واضحی روی دیوار نمی‌افتد. عینک افراد نزدیک‌بین از این نوع عدسی است.'],
+  'mirror-concave': ['Concave mirror','آینهٔ کاو (مقعر)',
+    'A concave mirror curves inward, like the inside of a spoon. Parallel rays bounce off it and meet at the focal point F, halfway between the mirror and its centre of curvature C (f = R/2). If the candle is beyond F, the reflected rays meet in front of the mirror and make a real, upside-down image you can catch on a small screen. If the candle is inside F, you see a bigger, upright virtual image behind the mirror, like a make-up mirror. Tip: in a real experiment the screen sits a little to the side so it does not block the candle.',
+    'آینهٔ کاو مثل داخل قاشق به سمت داخل خمیده است. پرتوهای موازی پس از بازتاب در کانون F به هم می‌رسند؛ کانون وسط آینه و مرکز انحنای C است (f = R/2). اگر شمع دورتر از F باشد، پرتوهای بازتابیده جلوی آینه به هم می‌رسند و تصویری حقیقی و وارونه می‌سازند که روی یک پردهٔ کوچک دیده می‌شود. اگر شمع بین آینه و F باشد، تصویری مجازی، مستقیم و بزرگ‌تر پشت آینه می‌بینید؛ مثل آینهٔ آرایش. نکته: در آزمایش واقعی پرده را کمی کنار می‌گذارند تا جلوی نور شمع را نگیرد.'],
+  'mirror-convex': ['Convex mirror','آینهٔ کوژ (محدب)',
+    'A convex mirror bulges outward, like the back of a spoon. It spreads the reflected rays apart, so they only seem to come from a point behind the mirror. The image is always virtual, upright and smaller, but you see a wide area. That is why car side mirrors and shop security mirrors are convex.',
+    'آینهٔ کوژ مثل پشت قاشق به بیرون برآمده است. پرتوهای بازتابیده را از هم دور می‌کند، طوری که انگار از نقطه‌ای پشت آینه می‌آیند. تصویر همیشه مجازی، مستقیم و کوچک‌تر است، اما میدان دید وسیعی دارد. برای همین آینهٔ بغل خودرو و آینه‌های امنیتی فروشگاه‌ها کوژ هستند.'],
+  'mirror-plane': ['Plane (flat) mirror','آینهٔ تخت',
+    'A flat mirror sends each ray back at the same angle it arrives. The image appears behind the mirror, exactly as far behind as the candle is in front. It is virtual, upright and the same size (m = 1). No real image forms, so the screen never shows a sharp picture.',
+    'آینهٔ تخت هر پرتو را با همان زاویه‌ای که به آن می‌رسد بازمی‌تاباند. تصویر پشت آینه دیده می‌شود، درست به همان فاصله‌ای که شمع جلوی آینه است. تصویر مجازی، مستقیم و هم‌اندازه است (m = 1). تصویر حقیقی تشکیل نمی‌شود، پس روی پرده هیچ‌وقت تصویر واضحی نمی‌افتد.']
+};
+function caseText(c){
+  const {d,f,type} = c, L = mode==='lens', P2 = L ? '2F' : 'C';
+  const devEn = L ? 'lens' : 'mirror', devFa = L ? 'عدسی' : 'آینه';
+  if (!isFinite(f)) return ['the image is as far behind the mirror as the candle is in front: virtual, upright, same size.',
+    'تصویر به همان فاصلهٔ شمع، پشت آینه است: مجازی، مستقیم و هم‌اندازه.'];
+  if (f < 0) return [`a diverging ${devEn} always gives a virtual, upright, smaller image, wherever the candle is.`,
+    `${L?'عدسی واگرا':'آینهٔ کوژ'} همیشه تصویری مجازی، مستقیم و کوچک‌تر می‌دهد، شمع هر جا باشد.`];
+  if (Math.abs(d-2*f) < 0.015*2*f) return [`candle at ${P2} → image at ${P2}: real, inverted, same size.`, `شمع روی ${P2} ← تصویر روی ${P2}: حقیقی، وارونه، هم‌اندازه.`];
+  if (d > 2*f) return [`candle beyond ${P2} → image between F and ${P2}: real, inverted, smaller.`, `شمع دورتر از ${P2} ← تصویر بین F و ${P2}: حقیقی، وارونه، کوچک‌تر.`];
+  if (Math.abs(d-f) < 0.012*f) return ['candle at F → rays leave parallel, so no image forms.', 'شمع روی کانون ← پرتوها موازی می‌روند و تصویری تشکیل نمی‌شود.'];
+  if (d > f) return [`candle between F and ${P2} → image beyond ${P2}: real, inverted, larger.`, `شمع بین F و ${P2} ← تصویر دورتر از ${P2}: حقیقی، وارونه، بزرگ‌تر.`];
+  return [`candle between F and the ${devEn} → virtual, upright, larger image (${L?'magnifying glass':'make-up mirror'}).`,
+    `شمع بین کانون و ${devFa} ← تصویر مجازی، مستقیم و بزرگ‌تر (${L?'ذره‌بین':'آینهٔ آرایش'}).`];
+}
+let lastNoteKey = '';
+function updateNote(){
+  if (!P.ltype) return;
+  const c = cur(), key = mode + '-' + c.type;
+  if (key !== lastNoteKey){
+    const n = NOTES[key];
+    $('noteTitleEn').textContent = n[0]; $('noteTitleFa').textContent = n[1];
+    $('noteEn').textContent = n[2]; $('noteFa').textContent = n[3];
+    lastNoteKey = key;
+  }
+  const [en, fa] = caseText(c);
+  $('nowEn').textContent = en; $('nowFa').textContent = fa;
+}
+
+// ---------- canvas ----------
+const cv = $('c'), ctx = cv.getContext('2d'), wv = $('wv'), wctx = wv.getContext('2d');
+const RANGE = {lens:[-158,208], mirror:[-158,128]}, YMAX = 15;
+let W, H, dpr, X0, X1;
 function resize(){
   dpr = window.devicePixelRatio || 1;
   W = cv.clientWidth; H = cv.clientHeight;
@@ -114,42 +254,31 @@ function resize(){
   wv.width = wv.clientWidth*dpr; wv.height = wv.clientHeight*dpr;
 }
 window.addEventListener('resize', resize); resize();
-
-const sx = () => W/(X1-X0);
-const sy = () => H/(2*YMAX);
-const tx = x => (x - X0)*sx();
-const ty = y => H/2 - y*sy();
+const sx = () => W/(X1-X0), sy = () => H/(2*YMAX);
+const tx = x => (x - X0)*sx(), ty = y => H/2 - y*sy();
+const FONT = '11px Vazirmatn, Tahoma, system-ui, sans-serif';
 
 function line(x1,y1,x2,y2,color,w=1.5,dash=null,alpha=1){
   ctx.save(); ctx.globalAlpha=alpha; ctx.strokeStyle=color; ctx.lineWidth=w;
-  if(dash) ctx.setLineDash(dash);
+  if (dash) ctx.setLineDash(dash);
   ctx.beginPath(); ctx.moveTo(tx(x1),ty(y1)); ctx.lineTo(tx(x2),ty(y2)); ctx.stroke(); ctx.restore();
 }
-
-// Candle drawn in pixel space: base at (px,py), height in px, flip if negative
 function drawCandle(c, px, py, hpx, t, opts={}){
   const {ghost=false, dashed=false, pxPerCm=sy()} = opts;
   const sgn = Math.sign(hpx) || 1, h = Math.abs(hpx);
   const bodyH = h*0.72, w = Math.max(4, Math.min(1.6*pxPerCm, h*0.28));
-  c.save();
-  c.translate(px, py); c.scale(1, sgn);
-  c.globalAlpha = ghost ? 0.45 : 1;
-  // body
+  c.save(); c.translate(px, py); c.scale(1, sgn);
+  c.globalAlpha *= ghost ? 0.45 : 1;
   c.fillStyle = dashed ? 'transparent' : '#f1e9d8';
-  c.strokeStyle = dashed ? '#ffffffaa' : '#cfc4ad';
-  c.lineWidth = 1.2;
+  c.strokeStyle = dashed ? '#ffffffaa' : '#cfc4ad'; c.lineWidth = 1.2;
   if (dashed) c.setLineDash([4,3]);
   c.beginPath(); c.rect(-w/2, -bodyH, w, bodyH); c.fill(); c.stroke();
-  // wick
-  c.setLineDash([]);
-  c.strokeStyle = dashed ? '#ffffff88' : '#333'; c.beginPath(); c.moveTo(0,-bodyH); c.lineTo(0,-bodyH-h*0.04); c.stroke();
-  // flame
-  const fl = h - bodyH, fw = w*0.55*(1+0.06*Math.sin(t*0.011)), sway = Math.sin(t*0.007)*fw*0.12;
-  const fy0 = -bodyH - h*0.02;
-  c.beginPath();
-  c.moveTo(0, fy0);
-  c.bezierCurveTo(fw, fy0 - fl*0.25, fw*0.5, fy0 - fl*0.75, sway, -h);
-  c.bezierCurveTo(-fw*0.5, fy0 - fl*0.75, -fw, fy0 - fl*0.25, 0, fy0);
+  c.setLineDash([]); c.strokeStyle = dashed ? '#ffffff88' : '#333';
+  c.beginPath(); c.moveTo(0,-bodyH); c.lineTo(0,-bodyH-h*0.04); c.stroke();
+  const fl = h-bodyH, fw = w*0.55*(1+0.06*Math.sin(t*0.011)), sway = Math.sin(t*0.007)*fw*0.12, fy0 = -bodyH-h*0.02;
+  c.beginPath(); c.moveTo(0, fy0);
+  c.bezierCurveTo(fw, fy0-fl*0.25, fw*0.5, fy0-fl*0.75, sway, -h);
+  c.bezierCurveTo(-fw*0.5, fy0-fl*0.75, -fw, fy0-fl*0.25, 0, fy0);
   if (dashed){ c.setLineDash([4,3]); c.strokeStyle='#ffd27faa'; c.stroke(); }
   else {
     const g = c.createLinearGradient(0, fy0, 0, -h);
@@ -158,170 +287,176 @@ function drawCandle(c, px, py, hpx, t, opts={}){
   }
   c.restore();
 }
-
-// ---------- main draw ----------
-function draw(t){
-  const {f, di, m} = optics();
-  const {do:d, dw, ap, hc, nr} = S;
-  ctx.setTransform(dpr,0,0,dpr,0,0);
-  ctx.clearRect(0,0,W,H);
-
-  // grid ticks
-  ctx.fillStyle = '#5d6473'; ctx.font = '10px system-ui'; ctx.textAlign='center';
-  for (let x = -150; x <= 200; x += 25){
+function axis(){
+  ctx.font = FONT; ctx.textAlign = 'center'; ctx.fillStyle = '#6b7385';
+  for (let x = -150; x <= X1; x += 25){
     ctx.fillRect(tx(x), H/2-3, 1, 6);
     if (x % 50 === 0 && x !== 0) ctx.fillText(x, tx(x), H/2+16);
   }
-  // optical axis
-  line(X0,0,X1,0,'#3b4150',1);
-
-  // focal points
-  [[f,'F′'],[-f,'F'],[2*f,'2F′'],[-2*f,'2F']].forEach(([x,lab],i)=>{
-    if (x < X0 || x > X1) return;
-    ctx.fillStyle = i<2 ? '#ff6ad5' : '#8a6a99';
-    ctx.beginPath(); ctx.arc(tx(x), ty(0), i<2?4:3, 0, Math.PI*2); ctx.fill();
+  line(X0,0,X1,0,'#4a5266',1);
+}
+function marks(list){
+  list.forEach(([x,lab,main]) => {
+    if (!isFinite(x) || x < X0 || x > X1) return;
+    ctx.fillStyle = main ? '#ff6ad5' : '#a07ab3';
+    ctx.beginPath(); ctx.arc(tx(x), ty(0), main?4:3, 0, Math.PI*2); ctx.fill();
     ctx.fillText(lab, tx(x), ty(0)-8);
   });
-
-  // wall
-  const wx = tx(dw);
-  ctx.fillStyle = '#3a4152'; ctx.fillRect(wx, 0, 7, H);
-  ctx.fillStyle = '#9aa0ab'; ctx.fillText('wall', wx+3, 12);
-
-  // ---------- rays ----------
-  ctx.save(); ctx.beginPath(); ctx.rect(0,0,wx,H); ctx.clip();
-  const trace = (y0, yl) => {   // from (-d, y0) to lens at height yl → returns outgoing slope
-    const sIn = (yl - y0)/d;
-    return sIn - yl/f;
-  };
-  // fan
-  const hits = [];
-  const N = nr;
-  for (let i = 0; i < N; i++){
-    const yl = N === 1 ? 0 : -ap*0.97 + (2*ap*0.97)*i/(N-1);
-    const so = trace(hc, yl);
-    const yw = yl + so*dw;
-    hits.push(yw);
-    line(-d, hc, 0, yl, 'rgba(255,170,80,0.55)', 1);
-    line(0, yl, dw, yw, 'rgba(255,170,80,0.55)', 1);
-  }
-  // principal rays
-  const principal = [];
-  principal.push({yl: hc, c:'#ffd54a'});            // parallel in
-  principal.push({yl: 0,  c:'#4fd1ff'});            // through centre
-  if (Math.abs(d - f) > 0.5) principal.push({yl: -hc*f/(d-f), c:'#ff6ad5'}); // via focal point → parallel out
-  principal.forEach(p=>{
-    const so = trace(hc, p.yl);
-    const outside = Math.abs(p.yl) > ap;
-    const dash = outside ? [5,4] : null;
-    line(-d, hc, 0, p.yl, p.c, 2, dash, outside?0.6:1);
-    line(0, p.yl, dw, p.yl + so*dw, p.c, 2, dash, outside?0.6:1);
-    // virtual extension backwards
-    if (isFinite(di) && di < 0) line(0, p.yl, di, p.yl + so*di, p.c, 1.2, [3,4], 0.6);
-    // beyond-lens extension to virtual intersection when di>dw is irrelevant (clipped by wall)
-  });
-  ctx.restore();
-
-  // lit area on wall
-  const tipHits = hits.length ? hits : [ (0 + trace(hc,0)*dw) ];
-  const baseHits = [-ap, ap].map(yl => yl + (yl/d - yl/f)*dw);
-  const allH = tipHits.concat(baseHits);
-  const lo = Math.min(...allH), hi = Math.max(...allH);
-  ctx.fillStyle = 'rgba(255,190,90,0.55)';
-  ctx.fillRect(wx-2, ty(hi), 4, Math.max(2, ty(lo)-ty(hi)));
-
-  // ---------- lens (true shape using vertical scale) ----------
-  const R = S.R, h = Math.min(ap, R*0.98), e = 0.25;
-  const sagAt = y => R - Math.sqrt(R*R - y*y);
-  const sag = sagAt(h), k = sy(), cx = tx(0);
-  ctx.beginPath();
-  const steps = 40;
-  for (let i=0;i<=steps;i++){ // left surface top→bottom
-    const y = h - 2*h*i/steps;
-    const xw = S.type==='convex' ? -e - (sag - sagAt(y)) : -e - sagAt(y);
-    i ? ctx.lineTo(cx + xw*k, ty(y)) : ctx.moveTo(cx + xw*k, ty(y));
-  }
-  for (let i=0;i<=steps;i++){ // right surface bottom→top
-    const y = -h + 2*h*i/steps;
-    const xw = S.type==='convex' ? e + (sag - sagAt(y)) : e + sagAt(y);
-    ctx.lineTo(cx + xw*k, ty(y));
-  }
-  ctx.closePath();
-  ctx.fillStyle = 'rgba(120,200,255,0.22)'; ctx.fill();
-  ctx.strokeStyle = '#8fd3ff'; ctx.lineWidth = 1.5; ctx.stroke();
-
-  // ---------- candle (object) ----------
-  drawCandle(ctx, tx(-d), ty(0), hc*sy(), t);
-  ctx.fillStyle='#9aa0ab'; ctx.fillText('candle', tx(-d), ty(0)+28);
-
-  // ---------- image ----------
-  if (isFinite(di) && di > X0 && di < X1 && Math.abs(m*hc) < YMAX*1.5){
-    const real = di > 0;
-    drawCandle(ctx, tx(di), ty(0), m*hc*sy(), t, {ghost: real, dashed: !real});
-    ctx.fillStyle = real ? '#ffcf8a' : '#cfd3da';
-    ctx.fillText(real ? 'real image' : 'virtual image', tx(di), m*hc>0 ? ty(0)+28 : ty(0)-8 - Math.abs(m*hc)*sy() - 4);
+}
+function drawImage(t, xImg, m, hc, real){
+  if (isFinite(xImg) && xImg > X0 && xImg < X1 && Math.abs(m*hc) < YMAX*1.5){
+    drawCandle(ctx, tx(xImg), ty(0), m*hc*sy(), t, {ghost: real, dashed: !real});
+    ctx.fillStyle = real ? '#ffcf8a' : '#d6d9e0';
+    ctx.fillText(real ? 'real image · تصویر حقیقی' : 'virtual image · تصویر مجازی', tx(xImg), m>0 ? ty(0)-m*hc*sy()-8 : ty(0)-24);
   } else {
-    ctx.fillStyle='#cfd3da'; ctx.textAlign='left';
-    ctx.fillText(isFinite(di) ? `image at ${di.toFixed(0)} cm (off-screen)` : 'image at infinity (rays parallel)', 8, H-10);
-    ctx.textAlign='center';
-  }
-
-  // ---------- wall view inset ----------
-  drawWallView(t, tipHits);
-
-  // ---------- readouts ----------
-  $('r_f').textContent = f.toFixed(1) + ' cm';
-  $('r_di').textContent = !isFinite(di) ? '∞' : di.toFixed(1) + ' cm' + (di<0 ? ' (same side as candle)' : '');
-  $('r_m').textContent = !isFinite(m) ? '∞' : m.toFixed(2) + '×';
-  $('r_type').textContent = !isFinite(di) ? '—' :
-    `${di>0?'Real':'Virtual'}, ${m<0?'inverted':'upright'}, ${Math.abs(Math.abs(m)-1)<0.02?'same size':Math.abs(m)>1?'enlarged':'reduced'}`;
-  if (performance.now() - flashMsg > 1800){
-    const blur = Math.max(...tipHits) - Math.min(...tipHits);
-    const sharp = isFinite(di) && di>0 && Math.abs(dw-di) < Math.max(0.6, di*0.015);
-    $('r_wall').innerHTML = sharp ? '<span class="ok">Sharp image ✓</span>'
-      : `<span class="warn">Blurry — spot ≈ ${blur.toFixed(1)} cm</span>`;
+    ctx.fillStyle = '#d6d9e0'; ctx.textAlign = 'left';
+    ctx.fillText(isFinite(xImg) ? `image off-screen (${Math.abs(xImg).toFixed(0)} cm) · تصویر بیرون از کادر` : 'image at infinity · تصویر در بی‌نهایت', 8, H-10);
+    ctx.textAlign = 'center';
   }
 }
 
-function drawWallView(t, tipHits){
+function drawLens(t, c){
+  const {d,hc,ap,ds:dw,nr,f,R,type} = c, di = imageOf(d,f), m = -di/d;
+  X0 = RANGE.lens[0]; X1 = RANGE.lens[1];
+  axis();
+  marks([[f,'F′',1],[-f,'F',1],[2*f,'2F′'],[-2*f,'2F']]);
+  const wx = tx(dw);
+  ctx.fillStyle = '#3d4659'; ctx.fillRect(wx, 0, 7, H);
+  ctx.fillStyle = '#aab1bf'; ctx.fillText('wall · دیوار', Math.min(wx, W-34), H-6);
+  ctx.save(); ctx.beginPath(); ctx.rect(0,0,wx,H); ctx.clip();
+  const hits = [];
+  for (let i = 0; i < nr; i++){
+    const yl = nr === 1 ? 0 : -ap*0.97 + 2*ap*0.97*i/(nr-1), so = slopeOut(d,hc,f,yl), yw = yl + so*dw;
+    hits.push(yw);
+    line(-d,hc,0,yl,'rgba(255,170,80,0.55)',1); line(0,yl,dw,yw,'rgba(255,170,80,0.55)',1);
+  }
+  const pr = [{yl:hc,c:'#ffd54a'},{yl:0,c:'#4fd1ff'}];
+  if (Math.abs(d-f) > 0.5) pr.push({yl:-hc*f/(d-f), c:'#ff6ad5'});
+  pr.forEach(p => {
+    const so = slopeOut(d,hc,f,p.yl), out = Math.abs(p.yl) > ap, dash = out ? [5,4] : null;
+    line(-d,hc,0,p.yl,p.c,2,dash,out?0.6:1); line(0,p.yl,dw,p.yl+so*dw,p.c,2,dash,out?0.6:1);
+    if (isFinite(di) && di < 0) line(0,p.yl,di,p.yl+so*di,p.c,1.2,[3,4],0.6);
+  });
+  ctx.restore();
+  litBand(wx, hits, d, f, dw, ap, hc);
+  // lens body, true shape at vertical scale
+  const h = Math.min(ap, R*0.98), e = 0.25, sagAt = y => R - Math.sqrt(R*R - y*y), sag = sagAt(h), k = sy(), cx = tx(0);
+  ctx.beginPath();
+  for (let i=0;i<=40;i++){ const y = h-2*h*i/40, xw = type==='convex' ? -e-(sag-sagAt(y)) : -e-sagAt(y); i ? ctx.lineTo(cx+xw*k, ty(y)) : ctx.moveTo(cx+xw*k, ty(y)); }
+  for (let i=0;i<=40;i++){ const y = -h+2*h*i/40, xw = type==='convex' ? e+(sag-sagAt(y)) : e+sagAt(y); ctx.lineTo(cx+xw*k, ty(y)); }
+  ctx.closePath(); ctx.fillStyle = 'rgba(120,200,255,0.22)'; ctx.fill(); ctx.strokeStyle = '#8fd3ff'; ctx.lineWidth = 1.5; ctx.stroke();
+  drawCandle(ctx, tx(-d), ty(0), hc*sy(), t);
+  ctx.fillStyle = '#aab1bf'; ctx.fillText('candle · شمع', tx(-d), ty(0)+28);
+  drawImage(t, di, m, hc, di > 0);
+  return {di, m, hits};
+}
+
+function drawMirror(t, c){
+  const {d,hc,ap,ds,nr,f,R,type} = c, di = imageOf(d,f), m = -di/d;
+  X0 = RANGE.mirror[0]; X1 = RANGE.mirror[1];
+  axis();
+  if (isFinite(f)) marks([[-f,'F',1],[-2*f,'C']]);
+  // mirror surface offset (drawn at vertical scale so the curve is true-shape)
+  const h = Math.min(ap, R*0.98), sagAt = y => type==='plane' ? 0 : R - Math.sqrt(R*R - y*y);
+  const xsW = y => (type==='concave' ? -sagAt(y) : type==='convex' ? sagAt(y) : 0) * sy()/sx();
+  // screen
+  const sxp = tx(-ds);
+  ctx.fillStyle = 'rgba(200,190,215,0.35)'; ctx.fillRect(sxp-6, ty(YMAX*0.8), 6, H*0.8);
+  ctx.fillStyle = '#c9bdd4'; ctx.fillText('screen · پرده', Math.max(sxp, 36), H-6);
+  const hits = [];
+  for (let i = 0; i < nr; i++){
+    const yl = nr === 1 ? 0 : -ap*0.97 + 2*ap*0.97*i/(nr-1), so = slopeOut(d,hc,f,yl), ys = yl + so*ds;
+    hits.push(ys);
+    line(-d,hc,xsW(yl),yl,'rgba(255,170,80,0.55)',1); line(xsW(yl),yl,-ds,ys,'rgba(255,170,80,0.55)',1);
+  }
+  const pr = [{yl:hc,c:'#ffd54a'},{yl:0,c:'#4fd1ff'}];
+  if (isFinite(f) && Math.abs(d-f) > 0.5) pr.push({yl:-hc*f/(d-f), c:'#ff6ad5'});
+  pr.forEach(p => {
+    const so = slopeOut(d,hc,f,p.yl), out = Math.abs(p.yl) > ap, dash = out ? [5,4] : null, x0 = xsW(Math.min(Math.abs(p.yl),h));
+    line(-d,hc,x0,p.yl,p.c,2,dash,out?0.6:1); line(x0,p.yl,-ds,p.yl+so*ds,p.c,2,dash,out?0.6:1);
+    if (isFinite(di) && di < 0) line(x0,p.yl,-di,p.yl+so*di,p.c,1.2,[3,4],0.6);
+  });
+  litBand(sxp-6, hits, d, f, ds, ap, hc);
+  // mirror body + back hatching
+  const cx = tx(0);
+  ctx.beginPath();
+  for (let i=0;i<=40;i++){ const y = h-2*h*i/40; i ? ctx.lineTo(cx+xsW(y)*sx(), ty(y)) : ctx.moveTo(cx+xsW(y)*sx(), ty(y)); }
+  ctx.strokeStyle = '#e8eef5'; ctx.lineWidth = 3; ctx.stroke();
+  ctx.strokeStyle = '#8d97a6'; ctx.lineWidth = 1;
+  for (let y = -h; y <= h; y += 0.8){ const px = cx+xsW(y)*sx()+2, py = ty(y); ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(px+6,py-6); ctx.stroke(); }
+  drawCandle(ctx, tx(-d), ty(0), hc*sy(), t);
+  ctx.fillStyle = '#c9bdd4'; ctx.fillText('candle · شمع', tx(-d), ty(0)+28);
+  drawImage(t, -di, m, hc, di > 0);
+  return {di, m, hits};
+}
+
+function litBand(px, hits, d, f, dist, ap, hc){
+  const base = [-ap, ap].map(yl => yl + slopeOut(d,0,f,yl)*dist);
+  const all = (hits.length ? hits : [slopeOut(d,hc,f,0)*dist]).concat(base);
+  const lo = Math.min(...all), hi = Math.max(...all);
+  ctx.fillStyle = 'rgba(255,190,90,0.6)';
+  ctx.fillRect(px-2, ty(hi), 4, Math.max(2, ty(lo)-ty(hi)));
+}
+
+function drawInset(t, hits, d, hc, f, dist){
   const c = wctx, Wv = wv.clientWidth, Hv = wv.clientHeight;
-  c.setTransform(dpr,0,0,dpr,0,0);
-  c.clearRect(0,0,Wv,Hv);
+  if (!hits.length) hits = [slopeOut(d,hc,f,0)*dist];
+  c.setTransform(dpr,0,0,dpr,0,0); c.clearRect(0,0,Wv,Hv);
   c.fillStyle = '#14161b'; c.fillRect(0,0,Wv,Hv);
-  const pxcm = Hv/(2*YMAX);
-  const yt = tipHits.reduce((a,b)=>a+b,0)/tipHits.length;      // average landing height of flame tip
-  const blur = Math.max(...tipHits) - Math.min(...tipHits);     // spot diameter in cm
-  const blurPx = Math.min(18, blur*pxcm*0.5);
-  wv.style.filter = `blur(${blurPx.toFixed(1)}px)`;
-  const bright = Math.max(0.18, Math.min(1, 1/(1 + blur*0.25)));
-  c.globalAlpha = bright;
-  if (Math.abs(yt) > 0.05) drawCandle(c, Wv/2, Hv/2, yt*pxcm, t, {pxPerCm: pxcm});
+  const pxcm = Hv/(2*YMAX), yt = hits.reduce((a,b)=>a+b,0)/hits.length, blur = Math.max(...hits) - Math.min(...hits);
+  wv.style.filter = `blur(${Math.min(18, blur*pxcm*0.5).toFixed(1)}px)`;
+  c.globalAlpha = Math.max(0.18, Math.min(1, 1/(1+blur*0.25)));
+  if (Math.abs(yt) > 0.05) drawCandle(c, Wv/2, Hv/2, yt*pxcm, t, {pxPerCm:pxcm});
   c.globalAlpha = 1;
+  return blur;
+}
+
+function draw(t){
+  const c = cur();
+  ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,H);
+  const {di, m, hits} = mode==='lens' ? drawLens(t,c) : drawMirror(t,c);
+  const blur = drawInset(t, hits, c.d, c.hc, c.f, c.ds);
+  const L = mode==='lens';
+  $('r_f').textContent = isFinite(c.f) ? c.f.toFixed(1)+' cm' : '∞ (flat · تخت)';
+  const side = di > 0 ? (L ? ['other side','آن سوی عدسی'] : ['in front','جلوی آینه']) : (L ? ['same side as candle','همان سمت شمع'] : ['behind mirror','پشت آینه']);
+  $('r_di').innerHTML = !isFinite(di) ? '∞' : `${Math.abs(di).toFixed(1)} cm (${side[0]} · <bdi class="fa" style="display:inline">${side[1]}</bdi>)`;
+  $('r_m').textContent = !isFinite(m) ? '∞' : m.toFixed(2)+'×';
+  if (!isFinite(di)) $('r_type').innerHTML = '<span class="en">No image</span><span class="fa">تصویری نیست</span>';
+  else {
+    const same = Math.abs(Math.abs(m)-1) < 0.02, big = Math.abs(m) > 1;
+    $('r_type').innerHTML = `<span class="en">${di>0?'Real':'Virtual'}, ${m<0?'inverted':'upright'}, ${same?'same size':big?'larger':'smaller'}</span>
+      <span class="fa">${di>0?'حقیقی':'مجازی'}، ${m<0?'وارونه':'مستقیم'}، ${same?'هم‌اندازه':big?'بزرگ‌تر':'کوچک‌تر'}</span>`;
+  }
+  if (performance.now() - flashMsg > 1800){
+    const sharp = isFinite(di) && di > 0 && Math.abs(c.ds-di) < Math.max(0.6, di*0.015);
+    $('r_wall').innerHTML = sharp ? '<span class="en ok">Sharp image ✓</span><span class="fa ok">تصویر واضح ✓</span>'
+      : `<span class="en warn">Blurry: spot ≈ ${blur.toFixed(1)} cm</span><span class="fa warn">تار: قطر لکه ≈ ${blur.toFixed(1)} cm</span>`;
+  }
 }
 
 // ---------- dragging ----------
 let drag = null;
-function worldX(ev){ const r = cv.getBoundingClientRect(); return (ev.clientX - r.left)/sx() + X0; }
-cv.addEventListener('pointerdown', ev=>{
-  const x = worldX(ev), tol = 14/sx();
-  if (Math.abs(x + S.do) < Math.max(tol, 4)) drag = 'do';
-  else if (Math.abs(x - S.dw) < Math.max(tol, 4)) drag = 'dw';
-  if (drag) cv.setPointerCapture(ev.pointerId);
-});
-cv.addEventListener('pointermove', ev=>{
+const worldX = ev => (ev.clientX - cv.getBoundingClientRect().left)/sx() + X0;
+function targets(){
+  const c = cur();
+  return mode==='lens'
+    ? [{id:'l_do', x:-c.d, set:x=>-x}, {id:'l_dw', x:c.ds, set:x=>x}]
+    : [{id:'m_do', x:-c.d, set:x=>-x}, {id:'m_ds', x:-c.ds, set:x=>-x}];
+}
+const near = x => { const tol = Math.max(14/sx(), 4); return targets().find(g => Math.abs(x-g.x) < tol); };
+cv.addEventListener('pointerdown', ev => { drag = near(worldX(ev)); if (drag) cv.setPointerCapture(ev.pointerId); });
+cv.addEventListener('pointermove', ev => {
   const x = worldX(ev);
-  if (!drag){
-    const tol = Math.max(14/sx(), 4);
-    cv.style.cursor = (Math.abs(x+S.do)<tol || Math.abs(x-S.dw)<tol) ? 'ew-resize' : 'default';
-    return;
-  }
-  if (drag==='do') $('do').value = Math.min(150, Math.max(5, -x)).toFixed(1);
-  else $('dw').value = Math.min(200, Math.max(5, x)).toFixed(1);
+  if (!drag){ cv.style.cursor = near(x) ? 'ew-resize' : 'default'; return; }
+  const inp = $(drag.id);
+  inp.value = Math.min(+inp.max, Math.max(+inp.min, drag.set(x))).toFixed(1);
   readUI();
 });
-['pointerup','pointercancel'].forEach(e=>cv.addEventListener(e, ()=> drag=null));
+['pointerup','pointercancel'].forEach(e => cv.addEventListener(e, () => drag = null));
 
+readUI(); setMode('lens');
 (function loop(t){ draw(t||0); requestAnimationFrame(loop); })();
+}
 </script>
 </body>
 </html>
