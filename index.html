@@ -24,14 +24,15 @@
   .tabs button.on{background:var(--acc);color:#1a1a1a;border-color:var(--acc);font-weight:600}
   .tabs .fa{text-align:center;display:inline}
   #stage{position:relative}
+  @media (max-width:700px){#stage{position:sticky;top:0;z-index:5;background:var(--bg);padding-top:4px}#c{height:270px}}
   #c{width:100%;height:340px;display:block;background:var(--stage);border-radius:12px;touch-action:none}
   .inset{position:absolute;right:8px;top:8px;background:#000;border:1px solid var(--line);border-radius:8px;padding:4px;text-align:center}
   .inset span{display:block;font-size:10px;color:var(--mute);margin-bottom:2px}
   #wv{width:110px;height:110px;display:block;background:#08090c;border-radius:4px}
-  @media (max-width:600px){#wv{width:80px;height:80px}.inset{top:auto;bottom:8px}}
+  @media (max-width:600px){#wv{width:80px;height:80px}}
   .legend{display:flex;gap:6px 14px;flex-wrap:wrap;font-size:11.5px;color:var(--mute);margin-top:8px}
   .legend i{display:inline-block;width:14px;height:3px;vertical-align:middle;margin-right:5px;border-radius:2px}
-  .note{background:var(--panel);border-radius:12px;padding:12px;margin-top:12px;border-inline-start:4px solid var(--acc)}
+  .note{background:var(--panel);border-radius:12px;padding:12px;margin-top:16px;border-inline-start:4px solid var(--acc)}
   .note h3{margin:0 0 6px;font-size:14px;color:var(--acc)}
   .note p{margin:0;font-size:13.5px;line-height:1.6}
   .note .fa p{font-size:14px;line-height:1.9}
@@ -80,12 +81,6 @@
     <span><i style="background:#fff;opacity:.5"></i>Dashed = virtual · <span class="fa">خط‌چین = مجازی</span></span>
   </div>
 
-  <div class="note">
-    <div class="bi"><h3 class="en" id="noteTitleEn"></h3><h3 class="fa" id="noteTitleFa"></h3></div>
-    <div class="bi"><div class="en"><p id="noteEn"></p></div><div class="fa"><p id="noteFa"></p></div></div>
-    <div class="now bi"><div class="en"><b>Right now:</b> <span id="nowEn"></span></div><div class="fa"><b>هم‌اکنون:</b> <span id="nowFa"></span></div></div>
-  </div>
-
   <div class="groups" id="groups"></div>
 
   <div class="readout">
@@ -95,6 +90,12 @@
     <div><div class="bi"><small class="en">Image type</small><small class="fa">نوع تصویر</small></div><div class="val bi" id="r_type"></div></div>
     <div><div class="bi"><small class="en" id="r_wallEn">On the wall</small><small class="fa" id="r_wallFa">روی دیوار</small></div><div class="val bi" id="r_wall"></div></div>
   </div>
+  <div class="note">
+    <div class="bi"><h3 class="en" id="noteTitleEn"></h3><h3 class="fa" id="noteTitleFa"></h3></div>
+    <div class="bi"><div class="en"><p id="noteEn"></p></div><div class="fa"><p id="noteFa"></p></div></div>
+    <div class="now bi"><div class="en"><b>Right now:</b> <span id="nowEn"></span></div><div class="fa"><b>هم‌اکنون:</b> <span id="nowFa"></span></div></div>
+  </div>
+
   <footer>Thin-lens / paraxial model · <span class="fa">مدل عدسی نازک و پرتوهای نزدیک محور</span></footer>
 </div>
 
