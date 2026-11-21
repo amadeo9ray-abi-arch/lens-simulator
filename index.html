@@ -51,6 +51,20 @@
   .selrow{display:flex;gap:8px;align-items:center}
   #resetView{position:absolute;left:8px;top:8px;width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:rgba(0,0,0,.55);color:var(--ink);font-size:20px;cursor:pointer}
   .hint{font-size:11.5px;color:var(--mute);margin-top:6px}
+  .num{width:64px;background:transparent;border:0;border-bottom:1px dashed var(--acc);color:var(--acc);font:600 14px system-ui,sans-serif;text-align:right;padding:2px 0}
+  .num:focus{outline:none;border-bottom-style:solid}
+  .unit{color:var(--acc);font-size:12px;margin-left:2px}
+  .valwrap{white-space:nowrap}
+  #wizBtn{width:100%;margin:0 0 10px;padding:11px;border-radius:10px;border:1px dashed var(--acc);background:var(--panel);color:var(--ink);font-size:14px;cursor:pointer;display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:center}
+  #wiz{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.6);display:none;align-items:flex-end;justify-content:center}
+  #wiz.open{display:flex}
+  #wizPanel{background:var(--bg);width:100%;max-width:760px;max-height:88vh;overflow:auto;border-radius:16px 16px 0 0;padding:14px 12px 24px;border:1px solid var(--line)}
+  #wizPanel h3{margin:14px 2px 6px;font-size:13px;color:var(--acc)}
+  .case{width:100%;text-align:inherit;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px;margin:6px 0;cursor:pointer;font:inherit;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .case small{display:block;color:var(--mute);font-size:11.5px;margin-top:3px}
+  .case:active{transform:scale(.99)}
+  .wizHead{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center}
+  #wizClose{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-size:18px;cursor:pointer}
   .hint .fa{font-size:12px}
   .lab b{color:var(--acc);font-weight:600;white-space:nowrap;font-size:13px}
   .lab .fa{font-size:13px}
@@ -77,12 +91,14 @@
     <button id="tab_mirror">Mirror · <span class="fa">آینه</span></button>
   </div>
 
+  <button id="wizBtn"><span class="en">✨ Show me a case…</span><span class="fa">✨ نمایش یک حالت…</span></button>
+
   <div id="stage">
     <canvas id="c"></canvas>
     <div class="inset"><span id="insetLab"></span><canvas id="wv"></canvas></div>
-    <button id="resetView" title="Reset view · بازنشانی نما">⟲</button>
+    <button id="resetView" title="Fit view · جا دادن در کادر">⟲</button>
   </div>
-  <div class="bi hint"><div class="en">Drag the candle, the lens/mirror or the wall. Two fingers: pan &amp; zoom. On a computer: right- or middle-drag to pan, wheel to zoom. ⟲ resets the view.</div><div class="fa">شمع، عدسی/آینه یا دیوار را بکشید. با دو انگشت جابه‌جا و بزرگ‌نمایی کنید. در رایانه: کشیدن با کلیک راست یا میانی برای جابه‌جایی و چرخ ماوس برای بزرگ‌نمایی. دکمهٔ ⟲ نما را بازنشانی می‌کند.</div></div>
+  <div class="bi hint"><div class="en">Drag the candle, the lens/mirror or the wall. Two fingers: pan &amp; zoom. On a computer: right- or middle-drag to pan, wheel to zoom. ⟲ fits everything in view.</div><div class="fa">شمع، عدسی/آینه یا دیوار را بکشید. با دو انگشت جابه‌جا و بزرگ‌نمایی کنید. در رایانه: کشیدن با کلیک راست یا میانی برای جابه‌جایی و چرخ ماوس برای بزرگ‌نمایی. دکمهٔ ⟲ همه‌چیز را در کادر جا می‌دهد.</div></div>
 
   <div class="legend">
     <span><i style="background:#ffd54a"></i>Parallel ray · <span class="fa">پرتو موازی</span></span>
@@ -106,6 +122,11 @@
     <div class="bi"><div class="en"><p id="noteEn"></p></div><div class="fa"><p id="noteFa"></p></div></div>
     <div class="now bi"><div class="en"><b>Right now:</b> <span id="nowEn"></span></div><div class="fa"><b>هم‌اکنون:</b> <span id="nowFa"></span></div></div>
   </div>
+
+  <div id="wiz"><div id="wizPanel">
+    <div class="wizHead"><b class="en">All cases — tap one to see it</b><button id="wizClose" aria-label="Close · بستن">✕</button><b class="fa">همهٔ حالت‌ها — روی یکی بزنید</b></div>
+    <div id="wizList"></div>
+  </div></div>
 
   <footer>Thin-lens / paraxial model · <span class="fa">مدل عدسی نازک و پرتوهای نزدیک محور</span></footer>
 </div>
@@ -134,30 +155,30 @@ const S_ = (id,en,fa,mn,mx,st,v,u,info) => ({id,en,fa,mn,mx,st,v,u,info:info||id
 const GROUPS = {
   lens: [
     {en:'Distances', fa:'فاصله‌ها', items:[
-      S_('l_do','Candle → lens','شمع ← عدسی',5,150,0.5,60,' cm'),
-      S_('l_dw','Lens → wall','عدسی ← دیوار',5,200,0.5,70,' cm'),
+      S_('l_do','Candle → lens','شمع ← عدسی',1,400,0.5,60,' cm'),
+      S_('l_dw','Lens → wall','عدسی ← دیوار',1,600,0.5,70,' cm'),
       {button:'Move wall to sharp focus', fa:'بردن دیوار به نقطهٔ وضوح'}]},
     {en:'Lens', fa:'عدسی', items:[
       {select:'ltype', opts:[['convex','Convex — converging · کوژ (همگرا)'],['concave','Concave — diverging · کاو (واگرا)']]},
-      S_('l_R','Radius of curvature R','شعاع انحنا R',10,100,0.5,30,' cm'),
-      S_('l_n','Refractive index n','ضریب شکست n',1.3,1.9,0.01,1.5,''),
-      S_('l_ap','Aperture (half-height)','نیم‌دهانهٔ عدسی',1.5,9,0.1,6,' cm')]},
+      S_('l_R','Radius of curvature R','شعاع انحنا R',5,300,0.5,30,' cm'),
+      S_('l_n','Refractive index n','ضریب شکست n',1.1,2.5,0.01,1.5,''),
+      S_('l_ap','Aperture (half-height)','نیم‌دهانهٔ عدسی',0.5,15,0.1,6,' cm')]},
     {en:'Extra settings', fa:'تنظیمات بیشتر', items:[
-      S_('l_hc','Candle height','ارتفاع شمع',2,12,0.1,7,' cm','hc'),
-      S_('l_nr','Rays in the fan','تعداد پرتوها',0,25,1,11,'','nr')]}
+      S_('l_hc','Candle height','ارتفاع شمع',0.5,14,0.1,7,' cm','hc'),
+      S_('l_nr','Rays in the fan','تعداد پرتوها',0,40,1,11,'','nr')]}
   ],
   mirror: [
     {en:'Distances', fa:'فاصله‌ها', items:[
-      S_('m_do','Candle → mirror','شمع ← آینه',5,150,0.5,45,' cm'),
-      S_('m_ds','Mirror → screen','آینه ← پرده',5,150,0.5,80,' cm'),
+      S_('m_do','Candle → mirror','شمع ← آینه',1,400,0.5,45,' cm'),
+      S_('m_ds','Mirror → screen','آینه ← پرده',1,600,0.5,80,' cm'),
       {button:'Move screen to sharp focus', fa:'بردن پرده به نقطهٔ وضوح'}]},
     {en:'Mirror', fa:'آینه', items:[
       {select:'mtype', opts:[['concave','Concave · کاو (مقعر)'],['convex','Convex · کوژ (محدب)'],['plane','Plane (flat) · تخت']]},
-      S_('m_R','Radius of curvature R','شعاع انحنا R',10,120,0.5,60,' cm'),
-      S_('m_ap','Aperture (half-height)','نیم‌دهانهٔ آینه',1.5,9,0.1,6,' cm')]},
+      S_('m_R','Radius of curvature R','شعاع انحنا R',5,400,0.5,60,' cm'),
+      S_('m_ap','Aperture (half-height)','نیم‌دهانهٔ آینه',0.5,15,0.1,6,' cm')]},
     {en:'Extra settings', fa:'تنظیمات بیشتر', items:[
-      S_('m_hc','Candle height','ارتفاع شمع',2,12,0.1,6,' cm','hc'),
-      S_('m_nr','Rays in the fan','تعداد پرتوها',0,25,1,11,'','nr')]}
+      S_('m_hc','Candle height','ارتفاع شمع',0.5,14,0.1,6,' cm','hc'),
+      S_('m_nr','Rays in the fan','تعداد پرتوها',0,40,1,11,'','nr')]}
   ]
 };
 const units = {};
@@ -172,7 +193,7 @@ $('groups').innerHTML = Object.entries(GROUPS).map(([mode, groups]) => groups.ma
         return `<div class="ctl"><div class="selrow"><select id="${it.select}">${it.opts.map(o=>`<option value="${o[0]}">${o[1]}</option>`).join('')}</select>${ibtn(k)}</div>${infoBox(it.select).replace(`data-for="${it.select}"`,`data-for="${k}"`)}</div>`; }
       if (it.button) return `<div class="ctl"><button class="btn focusBtn"><span class="en">${it.button}</span><span class="fa">${it.fa}</span></button></div>`;
       units[it.id] = it.u; const k = it.id + '_i';
-      return `<div class="ctl"><div class="lab"><span class="en">${it.en}</span><b id="v_${it.id}"></b>${ibtn(k)}<span class="fa">${it.fa}</span></div>
+      return `<div class="ctl"><div class="lab"><span class="en">${it.en}</span><span class="valwrap"><input class="num" id="v_${it.id}" data-for="${it.id}" type="number" inputmode="decimal" min="${it.mn}" max="${it.mx}" step="${it.st}"><span class="unit">${it.u.trim()}</span></span>${ibtn(k)}<span class="fa">${it.fa}</span></div>
         <input type="range" id="${it.id}" min="${it.mn}" max="${it.mx}" step="${it.st}" value="${it.v}">${infoBox(it.info).replace(`data-for="${it.info}"`,`data-for="${k}"`)}</div>`;
     }).join('')}
   </div>`).join('')).join('');
@@ -182,24 +203,30 @@ $('groups').addEventListener('click', ev => {
   b.classList.toggle('on', box.classList.toggle('show'));
 });
 
+const clampIn = (id, v) => Math.min(+$(id).max, Math.max(+$(id).min, v));
+function setVal(id, v){ $(id).value = (+clampIn(id, v).toFixed(2)); }
 const P = {}, OFF = {lens:0, mirror:0}, view = {z:1, px:0, py:0};
 let mode = 'lens', flashMsg = -1e9;
 function readUI(){
   document.querySelectorAll('input[type=range]').forEach(inp => {
     P[inp.id] = parseFloat(inp.value);
-    $('v_'+inp.id).textContent = inp.value + units[inp.id];
+    const nb = $('v_'+inp.id); if (document.activeElement !== nb) nb.value = inp.value;
   });
   P.ltype = $('ltype').value; P.mtype = $('mtype').value;
   $('m_R').closest('.ctl').style.opacity = P.mtype==='plane' ? .4 : 1;
   updateNote();
 }
-document.querySelectorAll('input,select').forEach(el => el.addEventListener('input', readUI));
+document.querySelectorAll('input[type=range],select').forEach(el => el.addEventListener('input', readUI));
+document.querySelectorAll('.num').forEach(nb => {
+  const commit = () => { const v = parseFloat(nb.value); if (isFinite(v)) setVal(nb.dataset.for, v); readUI(); };
+  nb.addEventListener('change', commit);
+  nb.addEventListener('keydown', e => { if (e.key === 'Enter') { commit(); nb.blur(); } });
+});
 document.querySelectorAll('select').forEach(el => el.addEventListener('change', readUI));
 
 function setMode(m){
   mode = m;
   document.body.classList.toggle('mirror', m==='mirror');
-  view.z = 1; view.px = 0; view.py = 0;
   $('tab_lens').classList.toggle('on', m==='lens');
   $('tab_mirror').classList.toggle('on', m==='mirror');
   document.querySelectorAll('.group').forEach(g => g.classList.toggle('hidden', g.dataset.mode!==m));
@@ -207,6 +234,7 @@ function setMode(m){
   $('r_wallEn').textContent = m==='lens' ? 'On the wall' : 'On the screen';
   $('r_wallFa').textContent = m==='lens' ? 'روی دیوار' : 'روی پرده';
   updateNote();
+  if (typeof fitView === 'function') requestAnimationFrame(fitView);
 }
 $('tab_lens').onclick = () => setMode('lens');
 $('tab_mirror').onclick = () => setMode('mirror');
@@ -340,21 +368,23 @@ function marks(list){
   });
 }
 function drawImage(t, xImg, m, hc, real){
+  const big = Math.abs(m*hc) > YMAX*6 || Math.abs(xImg) > 3000;
   const scrX = isFinite(xImg) ? tx(xImg)*view.z + view.px : NaN;
-  if (isFinite(xImg) && (scrX < 0 || scrX > W)){
-    ctx.save(); ctx.setTransform(dpr,0,0,dpr,0,0); ctx.font = FONT; ctx.fillStyle = '#d6d9e0';
-    ctx.textAlign = scrX < 0 ? 'left' : 'right';
-    ctx.fillText(scrX < 0 ? '◀ image · تصویر' : 'image · تصویر ▶', scrX < 0 ? 8 : W-8, H-28);
+  let en = '', fa = '';
+  if (!isFinite(xImg)) { en = 'Image at infinity (rays leave parallel)'; fa = 'تصویر در بی‌نهایت (پرتوها موازی می‌روند)'; }
+  else if (big) { en = `Image very far away (${Math.abs(xImg).toFixed(0)} cm) and very large`; fa = 'تصویر بسیار دور و بسیار بزرگ است'; }
+  else if (scrX < 0) { en = '◀ image'; fa = 'تصویر در سمت چپ ◀'; }
+  else if (scrX > W) { en = 'image ▶'; fa = '▶ تصویر در سمت راست'; }
+  if (en){
+    ctx.save(); ctx.setTransform(dpr,0,0,dpr,0,0); ctx.font = FONT; ctx.fillStyle = '#f0e3c8';
+    ctx.textAlign = 'left'; ctx.fillText(en, 8, H-24);
+    ctx.textAlign = 'right'; ctx.direction = 'rtl'; ctx.fillText(fa, W-8, H-8);
     ctx.restore();
   }
-  if (isFinite(xImg) && Math.abs(xImg) < 1500 && Math.abs(m*hc) < YMAX*4){
+  if (isFinite(xImg) && !big){
     drawCandle(ctx, tx(xImg), ty(0), m*hc*sy(), t, {ghost: real, dashed: !real});
     ctx.fillStyle = real ? '#ffcf8a' : '#d6d9e0';
     ctx.fillText(real ? 'real image · تصویر حقیقی' : 'virtual image · تصویر مجازی', tx(xImg), m>0 ? ty(0)-m*hc*sy()-8 : ty(0)-24);
-  } else {
-    ctx.fillStyle = '#d6d9e0'; ctx.textAlign = 'left';
-    ctx.fillText(isFinite(xImg) ? `image off-screen (${Math.abs(xImg).toFixed(0)} cm) · تصویر بیرون از کادر` : 'image at infinity · تصویر در بی‌نهایت', 8, H-10);
-    ctx.textAlign = 'center';
   }
 }
 
@@ -374,11 +404,11 @@ function drawLens(t, c){
     line(-d,hc,0,yl,'rgba(255,170,80,0.55)',1); line(0,yl,dw,yw,'rgba(255,170,80,0.55)',1);
   }
   const pr = [{yl:hc,c:'#ffd54a'},{yl:0,c:'#4fd1ff'}];
-  if (Math.abs(d-f) > 0.5) pr.push({yl:-hc*f/(d-f), c:'#ff6ad5'});
+  if (Math.abs(d-f) > 1e-6 && Math.abs(hc*f/(d-f)) < 2.5*YMAX) pr.push({yl:-hc*f/(d-f), c:'#ff6ad5'});
   pr.forEach(p => {
     const so = slopeOut(d,hc,f,p.yl), out = Math.abs(p.yl) > ap, dash = out ? [5,4] : null;
     line(-d,hc,0,p.yl,p.c,2,dash,out?0.6:1); line(0,p.yl,dw,p.yl+so*dw,p.c,2,dash,out?0.6:1);
-    if (isFinite(di) && di < 0) line(0,p.yl,di,p.yl+so*di,p.c,1.2,[3,4],0.6);
+    if (isFinite(di) && di < 0 && di > -2000) line(0,p.yl,di,p.yl+so*di,p.c,1.2,[3,4],0.6);
   });
   ctx.restore();
   litBand(wx, hits, d, f, dw, ap, hc);
@@ -404,7 +434,7 @@ function drawMirror(t, c){
   const xsW = y => (type==='concave' ? -sagAt(y) : type==='convex' ? sagAt(y) : 0) * sy()/sx();
   // screen
   const sxp = tx(-ds);
-  ctx.fillStyle = 'rgba(200,190,215,0.35)'; ctx.fillRect(sxp-6, ty(YMAX*0.8), 6, H*0.8);
+  ctx.fillStyle = 'rgba(200,190,215,0.35)'; ctx.fillRect(sxp-6, -3*H, 6, 7*H);
   ctx.fillStyle = '#c9bdd4'; ctx.fillText('screen · پرده', sxp, H-6);
   const hits = [];
   for (let i = 0; i < nr; i++){
@@ -413,11 +443,11 @@ function drawMirror(t, c){
     line(-d,hc,xsW(yl),yl,'rgba(255,170,80,0.55)',1); line(xsW(yl),yl,-ds,ys,'rgba(255,170,80,0.55)',1);
   }
   const pr = [{yl:hc,c:'#ffd54a'},{yl:0,c:'#4fd1ff'}];
-  if (isFinite(f) && Math.abs(d-f) > 0.5) pr.push({yl:-hc*f/(d-f), c:'#ff6ad5'});
+  if (isFinite(f) && Math.abs(d-f) > 1e-6 && Math.abs(hc*f/(d-f)) < 2.5*YMAX) pr.push({yl:-hc*f/(d-f), c:'#ff6ad5'});
   pr.forEach(p => {
     const so = slopeOut(d,hc,f,p.yl), out = Math.abs(p.yl) > ap, dash = out ? [5,4] : null, x0 = xsW(Math.min(Math.abs(p.yl),h));
     line(-d,hc,x0,p.yl,p.c,2,dash,out?0.6:1); line(x0,p.yl,-ds,p.yl+so*ds,p.c,2,dash,out?0.6:1);
-    if (isFinite(di) && di < 0) line(x0,p.yl,-di,p.yl+so*di,p.c,1.2,[3,4],0.6);
+    if (isFinite(di) && di < 0 && di > -2000) line(x0,p.yl,-di,p.yl+so*di,p.c,1.2,[3,4],0.6);
   });
   litBand(sxp-6, hits, d, f, ds, ap, hc);
   // mirror body + back hatching
@@ -473,7 +503,9 @@ function draw(t){
   }
   if (performance.now() - flashMsg > 1800){
     const sharp = isFinite(di) && di > 0 && Math.abs(c.ds-di) < Math.max(0.6, di*0.015);
-    $('r_wall').innerHTML = sharp ? '<span class="en ok">Sharp image ✓</span><span class="fa ok">تصویر واضح ✓</span>'
+    const noReal = !isFinite(di) || di < 0;
+    $('r_wall').innerHTML = noReal ? `<span class="en warn">No real image: only a blur of light (≈ ${blur.toFixed(1)} cm)</span><span class="fa warn">تصویر حقیقی نیست: فقط لکهٔ نور (≈ ${blur.toFixed(1)} cm)</span>`
+      : sharp ? '<span class="en ok">Sharp image ✓</span><span class="fa ok">تصویر واضح ✓</span>'
       : `<span class="en warn">Blurry: spot ≈ ${blur.toFixed(1)} cm</span><span class="fa warn">تار: قطر لکه ≈ ${blur.toFixed(1)} cm</span>`;
   }
 }
@@ -497,8 +529,6 @@ function hit(px){
   targets().forEach(t => { const d = Math.abs(t.x - x); if (d < tol && (!best || d < best.d)) best = {...t, d}; });
   return best;
 }
-const clampIn = (id, v) => Math.min(+$(id).max, Math.max(+$(id).min, v));
-function setVal(id, v){ $(id).value = (+clampIn(id, v).toFixed(1)); }
 function applyDrag(x){
   const L = mode==='lens', c = cur(), ido = L ? 'l_do' : 'm_do', ids = L ? 'l_dw' : 'm_ds';
   if (drag.kind === 'candle') setVal(ido, c.off - x);
@@ -521,7 +551,7 @@ function startPinch(){
   const [a, b] = [...pts.values()];
   pinch = {c0:{x:(a.x+b.x)/2, y:(a.y+b.y)/2}, d0:Math.hypot(a.x-b.x, a.y-b.y) || 1, z0:view.z, px0:view.px, py0:view.py};
 }
-const clampZ = z => Math.min(6, Math.max(0.35, z));
+const clampZ = z => Math.min(8, Math.max(0.12, z));
 cv.addEventListener('pointerdown', ev => {
   const p = local(ev);
   cv.setPointerCapture(ev.pointerId);
@@ -563,9 +593,73 @@ cv.addEventListener('wheel', ev => {
   const bx = (p.x - view.px)/view.z, by = (p.y - view.py)/view.z;
   view.z = z; view.px = p.x - bx*z; view.py = p.y - by*z;
 }, {passive:false});
-$('resetView').onclick = () => { view.z = 1; view.px = 0; view.py = 0; };
+// ---------- fit everything in view ----------
+function fitView(){
+  const c = cur(), L = mode==='lens';
+  X0 = RANGE[mode][0]; X1 = RANGE[mode][1];
+  const di = imageOf(c.d, c.f), m = -di/c.d;
+  const xs = [c.off - c.d, c.off, L ? c.off + c.ds : c.off - c.ds];
+  const ys = [c.hc, -c.hc*0.4, c.ap, -c.ap];
+  if (isFinite(di) && Math.abs(di) < 800 && Math.abs(m*c.hc) < YMAX*6){ xs.push(L ? c.off + di : c.off - di); ys.push(m*c.hc); }
+  if (isFinite(c.f) && Math.abs(c.f) < 300){ xs.push(c.off - c.f); if (L) xs.push(c.off + c.f); }
+  const bx = xs.map(rtx), by = ys.map(ty);
+  const minx = Math.min(...bx)-24, maxx = Math.max(...bx)+24, miny = Math.min(...by)-30, maxy = Math.max(...by)+40;
+  const top = (wv.clientHeight || 80) + 24, avail = H - top - 30;   // keep clear of the wall-view box
+  const z = clampZ(Math.min(W*0.94/(maxx-minx), avail/(maxy-miny), 1.5));
+  view.z = z; view.px = W/2 - z*(minx+maxx)/2; view.py = top + avail/2 - z*(miny+maxy)/2;
+}
+$('resetView').onclick = fitView;
 
-readUI(); setMode('lens');
+// ---------- case wizard ----------
+const CASES = [
+  {g:['Convex lens','عدسی کوژ (همگرا)'], m:'lens', t:'convex', items:[
+    [90,'Real, inverted, smaller image on the wall','تصویر حقیقی، وارونه و کوچک‌تر روی دیوار','Candle beyond 2F · like a camera or the eye','شمع دورتر از 2F · مثل دوربین عکاسی یا چشم'],
+    [60,'Real, inverted, same-size image on the wall','تصویر حقیقی، وارونه و هم‌اندازه روی دیوار','Candle exactly at 2F','شمع درست روی 2F'],
+    [45,'Real, inverted, larger image on the wall','تصویر حقیقی، وارونه و بزرگ‌تر روی دیوار','Candle between F and 2F · like a projector','شمع بین F و 2F · مثل پروژکتور'],
+    [30,'No image: rays leave parallel (image at infinity)','بدون تصویر: پرتوها موازی می‌روند (تصویر در بی‌نهایت)','Candle exactly at F · like a spotlight','شمع درست روی کانون · مثل نورافکن'],
+    [15,'Virtual, upright, larger image','تصویر مجازی، مستقیم و بزرگ‌تر','Candle between F and the lens · magnifying glass','شمع بین کانون و عدسی · ذره‌بین'],
+    [300,'Very far candle: tiny image near the focal point','شمع بسیار دور: تصویر ریز نزدیک کانون','Distant object · like a telescope lens','جسم دور · مثل عدسی تلسکوپ']]},
+  {g:['Concave lens','عدسی کاو (واگرا)'], m:'lens', t:'concave', items:[
+    [60,'Virtual, upright, smaller image (always)','تصویر مجازی، مستقیم و کوچک‌تر (همیشه)','Any distance · glasses for short sight','هر فاصله‌ای · عینک نزدیک‌بینی']]},
+  {g:['Concave mirror','آینهٔ کاو (مقعر)'], m:'mirror', t:'concave', items:[
+    [90,'Real, inverted, smaller image on the screen','تصویر حقیقی، وارونه و کوچک‌تر روی پرده','Candle beyond C','شمع دورتر از C'],
+    [60,'Real, inverted, same-size image on the screen','تصویر حقیقی، وارونه و هم‌اندازه روی پرده','Candle exactly at C','شمع درست روی C'],
+    [45,'Real, inverted, larger image on the screen','تصویر حقیقی، وارونه و بزرگ‌تر روی پرده','Candle between F and C','شمع بین F و C'],
+    [30,'No image: rays leave parallel (image at infinity)','بدون تصویر: پرتوها موازی می‌روند (تصویر در بی‌نهایت)','Candle exactly at F · like a flashlight or car headlight','شمع درست روی کانون · مثل چراغ‌قوه یا چراغ خودرو'],
+    [15,'Virtual, upright, larger image behind the mirror','تصویر مجازی، مستقیم و بزرگ‌تر پشت آینه','Candle between F and the mirror · make-up mirror','شمع بین کانون و آینه · آینهٔ آرایش'],
+    [300,'Very far candle: tiny image near the focal point','شمع بسیار دور: تصویر ریز نزدیک کانون','Distant object · like a telescope mirror','جسم دور · مثل آینهٔ تلسکوپ']]},
+  {g:['Convex mirror','آینهٔ کوژ (محدب)'], m:'mirror', t:'convex', items:[
+    [60,'Virtual, upright, smaller image (always)','تصویر مجازی، مستقیم و کوچک‌تر (همیشه)','Any distance · car side mirror, shop security mirror','هر فاصله‌ای · آینهٔ بغل خودرو، آینهٔ امنیتی فروشگاه']]},
+  {g:['Plane mirror','آینهٔ تخت'], m:'mirror', t:'plane', items:[
+    [40,'Virtual, upright, same-size image behind the mirror','تصویر مجازی، مستقیم و هم‌اندازه پشت آینه','Any distance · an ordinary mirror','هر فاصله‌ای · آینهٔ معمولی']]}
+];
+$('wizList').innerHTML = CASES.map((g, gi) => `<h3 class="bi"><span class="en">${g.g[0]}</span><span class="fa">${g.g[1]}</span></h3>` +
+  g.items.map((it, ii) => `<button class="case" data-g="${gi}" data-i="${ii}"><span class="en">${it[1]}<small>${it[3]}</small></span><span class="fa">${it[2]}<small>${it[4]}</small></span></button>`).join('')).join('');
+function applyCase(g, it){
+  const L = g.m === 'lens', p = L ? 'l_' : 'm_';
+  setMode(g.m);
+  $(L ? 'ltype' : 'mtype').value = g.t;
+  OFF[g.m] = 0;
+  if (L){ setVal('l_R', 30); setVal('l_n', 1.5); } else setVal('m_R', 60);
+  setVal(p+'ap', 6); setVal(p+'hc', 6); setVal(p+'nr', 11);
+  setVal(p+'do', it[0]);
+  readUI();
+  const c = cur(), di = imageOf(c.d, c.f);
+  setVal(L ? 'l_dw' : 'm_ds', isFinite(di) && di > 1 && di < 590 ? di : 70);
+  readUI(); fitView();
+}
+$('wizBtn').onclick = () => { $('wiz').classList.add('open'); $('wizPanel').scrollTop = 0; };
+$('wizClose').onclick = () => $('wiz').classList.remove('open');
+$('wiz').addEventListener('click', ev => {
+  if (ev.target.id === 'wiz') { $('wiz').classList.remove('open'); return; }
+  const b = ev.target.closest('.case'); if (!b) return;
+  applyCase(CASES[+b.dataset.g], CASES[+b.dataset.g].items[+b.dataset.i]);
+  $('wiz').classList.remove('open');
+  window.scrollTo({top: Math.max(0, $('wizBtn').getBoundingClientRect().top + scrollY - 8), behavior:'smooth'});
+});
+
+
+readUI(); setMode('lens'); fitView();
 (function loop(t){ draw(t||0); requestAnimationFrame(loop); })();
 }
 </script>
